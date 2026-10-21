@@ -17,4 +17,5 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
+- Run Node SDK/Wasm checks and browser/Wasm suites in separate CI jobs, with runner resource diagnostics — keep the new backend workload from sharing the browser's thread budget and make resource failures inspectable.
 - Updated the Playwright test runner and pinned its dependency lock — the previous browser download hosts no longer resolve, and the kernel experiment needs current Wasm-GC browser coverage.

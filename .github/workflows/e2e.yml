@@ -8,6 +8,19 @@ on:
   pull_request: {}
   workflow_dispatch: {}
 jobs:
+  sdk:
+    name: Paper SDK and API contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install paper SDK dependencies
+        run: npm ci --prefix site/sdk --no-audit --no-fund
+      - name: Verify PDF extraction, bucket transactions, proofs and Castalia projections
+        run: npm test --prefix site/sdk
+      - name: Type-check the SDK against a Castalia consumer
+        run: npm run test:types --prefix site/sdk
   e2e:
     runs-on: ubuntu-latest
     steps:
@@ -23,12 +36,23 @@ jobs:
         run: |
           python3 -m http.server 8799 --directory site >/tmp/srv.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://localhost:8799/ >/dev/null && break; sleep 1; done
-      - name: Install paper SDK dependencies
-        run: npm ci --prefix site/sdk --no-audit --no-fund
-      - name: Verify paper SDK, HTTP API, Castalia projections and TypeScript consumer
+      - name: Record browser runner resource limits
         run: |
-          npm test --prefix site/sdk
-          npm run test:types --prefix site/sdk
+          python3 - <<'PY'
+          import json, os, resource
+          from pathlib import Path
+          def read(path):
+              p = Path(path)
+              return p.read_text().strip() if p.exists() else None
+          print(json.dumps({
+              "logicalCpus": os.cpu_count(),
+              "processLimit": resource.getrlimit(resource.RLIMIT_NPROC),
+              "pidsCurrent": read('/sys/fs/cgroup/pids.current'),
+              "pidsMax": read('/sys/fs/cgroup/pids.max'),
+              "memoryCurrent": read('/sys/fs/cgroup/memory.current'),
+              "memoryMax": read('/sys/fs/cgroup/memory.max'),
+          }, indent=2))
+          PY
       - name: Check kernel adapter and committed artifacts
         run: node --test e2e/kernel-model.test.mjs e2e/entity-model.test.mjs
       - name: Run e2e
