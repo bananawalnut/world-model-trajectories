@@ -18,7 +18,9 @@ jobs:
       - name: Install paper SDK dependencies
         run: npm ci --prefix site/sdk --no-audit --no-fund
       - name: Verify PDF extraction, bucket transactions, proofs and Castalia projections
-        run: npm test --prefix site/sdk
+        # Each test file launches independent Z3/Wasm workers. Keep the bounded
+        # solver fixtures from competing with the HTTP/contract fixtures for CPU.
+        run: node --test --test-concurrency=1 site/sdk/test/*.test.mjs
       - name: Type-check the SDK against a Castalia consumer
         run: npm run test:types --prefix site/sdk
   e2e:

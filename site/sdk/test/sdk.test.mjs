@@ -51,7 +51,7 @@ test('real WMT lattice restores all coherent buckets, conflicts, and global weig
   const empty=await client.analyze(EMPTY_IR);assert.equal(empty.status,'consistent');assert.deepEqual(empty.positions,[{keep:[],drop:[]}]);assert.deepEqual(empty.renderedClaims,[]);
   const p=await demoPaper(),background=await controlledParser()({id:'c_background',statement:'All birds are fliers.'});
   background.claims[0].weight=20;const combined=mergeIR(background,p.review.ir),a=await client.analyze(combined);
-  assert.equal(a.status,'inconsistent');assert.equal(a.complete,true);assert.equal(a.positions.length,4);assert.equal(a.conflicts.length,2);
+  assert.equal(a.status,'inconsistent',JSON.stringify({stopReason:a.stopReason,message:a.message,steps:a.steps}));assert.equal(a.complete,true);assert.equal(a.positions.length,4);assert.equal(a.conflicts.length,2);
   const sets=new Set(a.positions.map(p=>[...p.keep].sort().join(',')));assert.equal(sets.size,4);
   assert(!a.repair.drop.includes('c_background'));
   for(const position of a.positions){const check=await client.analyze({...combined,claims:combined.claims.filter(c=>position.keep.includes(c.id))});assert.equal(check.status,'consistent');}
