@@ -6,7 +6,8 @@
     "test": "node e2e.mjs",
     "test:kernels": "node kernels.mjs",
     "test:kernel-model": "node --test kernel-model.test.mjs entity-model.test.mjs",
-    "test:entities": "node entities.mjs"
+    "test:entities": "node entities.mjs",
+    "test:papers": "node papers.mjs"
   },
   "dependencies": {
     "playwright": "1.64.1"

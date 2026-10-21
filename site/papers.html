@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Papers &amp; buckets · World-model trajectories SDK</title><link rel="icon" href="data:,">
+  <script src="coi-serviceworker.min.js"></script><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="kernels/lab.css"><link rel="stylesheet" href="papers/workbench.css">
+</head><body class="kernel-experiment">
+  <nav class="nav"><span class="glyph">⊢</span><b>world-model trajectories</b><a href="index.html">Claim workbench</a><a href="entity-lab.html">Entity equals</a><a href="kernel-lab.html">Mass kernel</a><span class="z3" id="paper-ready">Starting SDK…</span></nav>
+  <main class="wrap kernel-lab paper-workbench">
+    <header><p class="kick">Publication sidecar SDK · experimental</p><h1>Your buckets.<br><em>A paper’s claims.</em></h1><p class="lede">Extract claims from a PDF, review their formalization, and check them against a named world model. Coherent claims can enter your bucket. Conflicts leave it unchanged and open alternative trajectories.</p></header>
+    <div id="paper-error" role="alert"></div><div id="paper-progress" role="status" aria-live="polite"></div><button class="btn ghost sm" id="cancel-paper-operation" disabled>Cancel current operation</button>
+    <section class="panel bucket-panel"><div class="section-heading"><div><p class="kick">01 · Your world model</p><h2>Buckets &amp; trajectories</h2></div><button class="btn ghost sm" id="load-bucket-demo">Load two demo buckets</button></div>
+      <div class="paper-controls"><label>Active bucket<select id="bucket-select"><option value="">Create or load a bucket</option></select></label><label>Acting as<input id="actor-id" value="person:me"></label><label>Compare with<select id="bucket-compare"><option value="">Choose a second bucket</option></select></label></div>
+      <div id="bucket-summary" aria-live="polite"><p class="muted">A personal bucket holds your confirmed assumptions. An RFC bucket is a separate model with its own versions.</p></div><div id="bucket-comparison"></div>
+      <details><summary>Create a named bucket</summary><div class="paper-controls"><label>Name<input id="new-bucket-name" value="My world model"></label><label>Scope<select id="new-bucket-scope"><option value="personal">Personal</option><option value="rfc">RFC-scoped</option></select></label><label>RFC revision reference<input id="new-bucket-rfc" placeholder="RFC-0041@draft-a"></label></div>
+        <label>Initial claims (optional; controlled language)<textarea id="initial-bucket-claims" placeholder="All birds are fliers."></textarea></label><button class="btn sm" id="create-bucket">Create bucket</button>
+      </details>
+      <div class="cta"><button class="btn ghost sm" id="download-workspace">Download bucket workspace</button><label class="file-label">Restore a workspace<input type="file" id="workspace-file" accept="application/json,.json"></label></div>
+      <p class="small muted">This session stays in memory until you download it. Restore rechecks bucket heads; papers require fresh review. The original workbench’s saved branches are unchanged.</p>
+    </section>
+    <section class="panel"><div class="section-heading"><div><p class="kick">02 · The source</p><h2>Submit a paper &amp; computational evidence</h2></div><button class="btn ghost sm" id="load-paper-demo">Try the demo PDF</button></div>
+      <div class="paper-controls"><label>Paper title<input id="paper-title" placeholder="Title of the submitted paper"></label><label>Authors, separated by commas<input id="paper-authors" value="Local author"></label><label>PDF<input type="file" id="pdf-file" accept="application/pdf,.pdf"></label></div>
+      <div class="cta"><button class="btn warm" id="extract-paper">Extract claim candidates</button><a href="papers/demo.pdf" target="_blank" rel="noopener">Inspect the synthetic demo paper</a></div>
+      <div id="paper-source-summary"></div>
+      <p class="small muted">Text-layer extraction preserves page and character locators. It is a partial candidate census. Image-only pages need an OCR adapter; mathematical notation and layout need review.</p>
+    </section>
+    <section class="panel"><p class="kick">03 · The formalization seam</p><h2>Read the source. Confirm the meaning.</h2>
+      <div class="cta"><button class="btn sm" id="formalize-paper" disabled>Parse supported claims into WMT</button><button class="btn ghost sm" id="confirm-paper-review" disabled>Confirm selected formalizations</button></div>
+      <p class="small muted">The bundled parser handles explicit “All/Every/No …” and “… is [not] …” statements with declared vocabulary. Other prose stays unsupported until a model adapter or author supplies WMT IR. No remote model is called here.</p>
+      <details><summary>Vocabulary, model prompt &amp; author-supplied IR</summary>
+        <label>Controlled parser vocabulary<textarea id="paper-vocabulary" spellcheck="false"></textarea></label>
+        <label>Candidate for an external formalizer<select id="prompt-candidate"></select></label><button class="btn ghost sm" id="build-paper-prompt" disabled>Build model prompt</button><label class="sr-only" for="paper-model-prompt">Formalization model prompt</label><textarea id="paper-model-prompt" readonly placeholder="Copy a prompt into your chosen model. Review the returned WMT IR."></textarea>
+        <label>Authored proposal JSON: { ir, mappings, parserId }<textarea id="authored-proposal" spellcheck="false" placeholder="Paste a WMT IR proposal and exact source-claim mappings."></textarea></label><button class="btn ghost sm" id="apply-authored-proposal" disabled>Validate authored proposal</button>
+      </details>
+      <div id="paper-claims" aria-live="polite"><p class="muted">Load a PDF to see source-located candidates.</p></div><div id="paper-review-status" class="small muted"></div>
+    </section>
+    <section class="panel"><p class="kick">04 · Computational evidence</p><h2>Attached files and checked results</h2>
+      <p class="small">Attach author-provided proof artifacts, or build an entailment check against the reviewed WMT formulas. A passing entailment checks the named conclusion from its listed premises; it does not prove the paper as a whole.</p>
+      <div class="paper-controls"><label>Conclusion<select id="proof-target"></select></label><label>Declared premises (select one or more)<select id="proof-premises" multiple size="4"></select></label><div class="proof-actions"><button class="btn ghost sm" id="build-entailment" disabled>Attach entailment evidence</button><label class="file-label">Attach proof sidecar JSON<input type="file" id="proof-file" accept="application/json,.json"></label></div></div>
+      <div class="cta"><button class="btn sm" id="check-paper-proofs" disabled>Run installed proof checkers</button></div><div id="paper-proofs" aria-live="polite"><p class="muted">No computational evidence attached.</p></div>
+      <p class="small muted">Lean, Isabelle and custom artifacts can travel with the submission. They remain “attached, not checked” unless the host installs their exact verifier. This page runs the WMT/Z3 entailment checker.</p>
+    </section>
+    <section class="panel"><div class="section-heading"><div><p class="kick">05 · Your bucket decides</p><h2>Check &amp; branch</h2></div><button class="btn warm" id="submit-to-bucket" disabled>Check &amp; append if coherent</button></div>
+      <div id="bucket-verdict" class="statusbar muted" data-status="not_run" aria-live="polite">Review a paper and choose a bucket first.</div><div id="bucket-positions"></div><div id="bucket-conflicts"></div>
+      <p class="small muted">This is the original WMT coherence lattice: maximal consistent positions, irreducible conflicts, entrenchment-weighted repairs and acceptance across positions. Adopting a position creates a fork; it never overwrites the conflicted bucket. Unknown, timeout and capped searches never append.</p>
+      <details><summary>Exact insertion / conflict receipt</summary><pre id="bucket-receipt"></pre></details>
+    </section>
+    <section class="panel"><h2>Take the sidecar to your RFC or journal</h2><div class="cta"><button class="btn sm" id="download-paper-sidecar" disabled>Download paper + proofs + bucket evidence</button><a href="sdk/README.md">SDK &amp; API guide</a><a href="sdk/openapi.json">OpenAPI contract</a></div>
+      <p class="small muted">Local, not published. The SDK produces attributed evidence over exact versions. Castalia owns registration and review. This experimental release is unsigned and does not yet satisfy Castalia’s signed browser-engine release gate.</p>
+    </section>
+  </main><script type="module" src="papers/workbench.js"></script>
+</body></html>

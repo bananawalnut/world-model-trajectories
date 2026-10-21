@@ -1,6 +1,8 @@
 /crate/target
 **/*.rs.bk
 /e2e/node_modules/
+/site/sdk/node_modules/
+/site/sdk/*.tgz
 /.kernel-build/
 **/*.cmi
 **/*.cmo

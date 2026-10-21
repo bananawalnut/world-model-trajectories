@@ -1,0 +1,52 @@
+{
+  "name": "@wmt/paper-sdk",
+  "version": "0.1.0-experimental.1",
+  "description": "Versioned WMT buckets, PDF claim proposals and computational evidence for publication sidecars",
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.mts",
+      "import": "./index.mjs"
+    },
+    "./node": {
+      "types": "./node.d.mts",
+      "import": "./node.mjs"
+    },
+    "./server": {
+      "types": "./server.d.mts",
+      "import": "./server.mjs"
+    },
+    "./engine": {
+      "types": "./analysis.d.mts",
+      "import": "./analysis.mjs"
+    }
+  },
+  "files": [
+    "*.mjs",
+    "*.d.mts",
+    "openapi.json",
+    "runtime/",
+    "README.md",
+    "THIRD_PARTY.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "node server.mjs",
+    "test:types": "tsc --noEmit --strict --skipLibCheck --module NodeNext --target ES2022 --lib ES2022,DOM test/consumer.ts"
+  },
+  "dependencies": {
+    "pdfjs-dist": "5.6.205",
+    "z3-solver": "4.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "typescript": "5.9.3"
+  },
+  "types": "./index.d.mts"
+}

@@ -9,6 +9,14 @@ consistency, not truth.*
 It is a sibling of [stella / svenvs](https://github.com/emberian): same
 honesty discipline, same design language, no overclaim.
 
+The [paper sidecar SDK](site/sdk/README.md) adds named, versioned personal and
+RFC buckets, PDF claim extraction, reviewed formalization, computational proof
+artifacts, a loopback submission API and Castalia publication-contract adapters.
+Open `site/papers.html` for the integrated paper/bucket workbench. It uses the
+original WMT coherence lattice; the kernel labs remain optional tools alongside
+it. General prose uses configured extraction/formalization adapters or authored
+IR; the built-in parser has an explicit controlled grammar.
+
 ## The one idea
 
 **The tool does not parse natural language. You + your own LLM do, in the

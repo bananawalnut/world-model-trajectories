@@ -23,6 +23,12 @@ jobs:
         run: |
           python3 -m http.server 8799 --directory site >/tmp/srv.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://localhost:8799/ >/dev/null && break; sleep 1; done
+      - name: Install paper SDK dependencies
+        run: npm ci --prefix site/sdk --no-audit --no-fund
+      - name: Verify paper SDK, HTTP API, Castalia projections and TypeScript consumer
+        run: |
+          npm test --prefix site/sdk
+          npm run test:types --prefix site/sdk
       - name: Check kernel adapter and committed artifacts
         run: node --test e2e/kernel-model.test.mjs e2e/entity-model.test.mjs
       - name: Run e2e
@@ -43,3 +49,9 @@ jobs:
           BASE: http://localhost:8799/
           PW_CHANNEL: chromium
         run: node entities.mjs
+      - name: Run PDF submission and versioned bucket workbench
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node papers.mjs
