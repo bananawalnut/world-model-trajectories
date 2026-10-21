@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
+- A seven-step PDF-to-buckets walkthrough with a real rendered two-page paper, source highlights, author-role annotations, typed formula/primitive inspection, ambiguity experiments, lemma/theorem checks, missing-premise diagnostics, real RFC/personal bucket formation, coherent forks, and exports that restore in the main workbench.
 - Interactive paper/bucket coherence visualizations: exact conflict groups, a claim-by-position SAT matrix with source inspection and repair highlights, plus version/fork trajectories linked to comparisons. Higher-order conflicts remain groups; partial searches never acquire exhaustive acceptance colors.
 - A paper sidecar SDK and integrated bucket workbench — restore named personal/RFC world models, full WMT coherent alternatives, version-safe insertion/conflict receipts, forks and explicit workspace replay as the main submission flow.
 - Actual PDF text extraction with exact source locators, partial candidate claims, controlled and host-configurable scientific/model parsing, reviewed WMT IR, and an OpenAPI-described local submission API — let papers and computational evidence enter a reviewable language pipeline.

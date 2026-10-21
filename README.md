@@ -29,6 +29,29 @@ discarding positions. Unknown and incomplete checks show no exhaustive
 acceptance or repair. These are views of checked claim sets, not truth
 assignments to a model.
 
+## Guided PDF-to-buckets walkthrough
+
+Open **`site/walkthrough.html`** (or use the walkthrough button in the paper
+workbench) for a paced, runnable tour. It starts with a rendered two-page
+synthetic paper and highlights exact source passages. Extract its candidates,
+inspect typed predicates/constants and the composed formula tree, review five
+source mappings, and explicitly defer two ambiguous passages. An optional
+scenario tests the stronger “all” interpretation of “normally” without adopting
+it. The next steps check a lemma and theorem from their named premises, show a
+failed entailment without an observation, form an RFC model, and fork a
+conflicting personal bucket using the real solver positions. Export the sidecar,
+author reading annotations and a workspace that can be restored in the main
+paper workbench with fresh review/checking.
+
+The role labels are curated author annotations, distinct from the SDK's
+heuristic candidate kinds. Vocabulary comes from the configured example
+lexicon. The tour does not claim general mathematical-paper parsing or execute
+the paper's prose proof sketches. Bucket coherence treats reviewed formulas as
+assertions; a fork's retained theorem does not inherit a new proof when its
+original premises are dropped. The proof receipts retain those exact premises.
+The demo has its own in-memory workspace and leaves the main workbench alone.
+Rebuild its PDF with `tools/build-walkthrough-paper.py` (ReportLab required).
+
 ## The one idea
 
 **The tool does not parse natural language. You + your own LLM do, in the
