@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entity equality lab · World-model trajectories</title>
+  <link rel="icon" href="data:,"><script src="coi-serviceworker.min.js"></script>
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="kernels/lab.css"><link rel="stylesheet" href="kernels/entities.css">
+</head>
+<body>
+  <nav class="nav"><span class="glyph">⊢</span><b>world-model trajectories</b><a href="kernel-lab.html">Mass lab</a><a href="index.html">Claim workbench</a><span id="entity-ready" class="z3">Loading OCaml and Z3…</span></nav>
+  <main class="wrap kernel-lab entity-lab">
+    <header><p class="kick">Executable models · knowledge graphs</p><h1>Same entities.<br><em>Your definition of a match.</em></h1>
+      <p class="lede">A schema supplies a runnable equals function. Inherit its fields, override its comparison, and check the resulting claim with Z3. Stable entity IDs stay distinct.</p>
+    </header>
+    <section class="panel">
+      <h2>Choose a pair &amp; a schema</h2>
+      <p>The demo profiles have different emails and nearby embeddings. Try the inherited email policy, a cosine policy, or a policy that also reads their graph relationships.</p>
+      <div class="lab-inputs">
+        <label>Left entity<select id="entity-left"></select></label>
+        <label>Right entity<select id="entity-right"></select></label>
+        <label>Comparison schema<select id="entity-schema"></select></label>
+        <label>My claim<select id="entity-expected"><option value="match">These entities match</option><option value="no-match">These entities do not match</option></select></label>
+      </div>
+      <p id="policy-summary" class="small"></p>
+      <div class="cta"><button id="run-entities" class="btn warm" disabled>Run equals &amp; check claim</button><span id="entity-progress" role="status"></span></div>
+      <p class="small muted">One selected policy runs on both entities. Matching never merges IDs, substitutes objects, or implies a transitive match.</p>
+    </section>
+    <div class="entity-instrument">
+      <section class="panel"><h2>The knowledge graph</h2><div id="entity-graph-summary"></div>
+        <details><summary>Edit graph JSON</summary><label for="graph-source" class="sr-only">Knowledge graph JSON</label><textarea id="graph-source" spellcheck="false"></textarea></details>
+        <details><summary>Edit schema registry JSON</summary><p class="small muted">Required typed fields, single-parent inheritance, and an equals policy with its own required interface. An override keeps inherited fields.</p><label for="schema-source" class="sr-only">Schema registry JSON</label><textarea id="schema-source" spellcheck="false"></textarea></details>
+      </section>
+      <section class="panel"><h2>Schema-defined equals</h2>
+        <p class="small">Edit OCaml directly. This changes the selected schema’s policy; editing an inherited policy creates an override on that schema.</p>
+        <label class="policy-label">Policy ID / version<input id="policy-id"></label>
+        <label for="equals-source" class="sr-only">OCaml equals source</label><textarea id="equals-source" spellcheck="false"></textarea>
+        <div class="cta"><button id="inherit-equals" class="btn ghost sm">Use parent’s equals</button><button id="reset-entities" class="btn ghost sm">Restore demo graph &amp; schemas</button></div>
+        <details><summary>Function interface &amp; embedding helpers</summary>
+          <pre>Open Wmt_Entity:
+equals : graph -&gt; entity -&gt; entity -&gt; comparison
+decision : bool -&gt; comparison
+unknown : string -&gt; comparison
+text : entity -&gt; string -&gt; string option
+number : entity -&gt; string -&gt; float option
+flag : entity -&gt; string -&gt; bool option
+embedding : entity -&gt; string -&gt; embedding option
+cosine : ?threshold:float -&gt; string -&gt; entity -&gt; entity -&gt; comparison
+exact_embedding : string -&gt; entity -&gt; entity -&gt; comparison
+targets : graph -&gt; entity -&gt; string -&gt; string list
+related : graph -&gt; entity -&gt; string -&gt; entity -&gt; bool</pre>
+          <p class="small">The helpers check embedding model, revision, preprocessing, normalization and dimensions. Missing fields, incompatible spaces, and zero vectors produce unknown. Scores use binary64 floating point. The demo vectors are illustrative; this page does not generate embeddings.</p>
+          <p class="small">Code runs in a fresh browser worker with a 20-second limit. These are trusted user functions with normal worker capabilities. No Isabelle theorem is attached to entity comparisons.</p>
+        </details>
+      </section>
+    </div>
+    <section class="panel"><h2>Comparison &amp; consequence</h2>
+      <div id="entity-error" role="alert"></div><div id="entity-result" aria-live="polite"><p class="muted">Run equals to evaluate the selected pair.</p></div>
+      <div id="entity-verdict" class="statusbar muted" aria-live="polite">No current result.</div>
+      <div id="entity-claims"></div><p id="entity-conflict" class="small"></p>
+      <p class="small muted">The executed result is conditional on the exact graph, schema and policy snapshots. Retract a premise to check the remaining position. Unknown produces no match consequence.</p>
+    </section>
+    <section class="panel"><h2>Keep an alternative</h2>
+      <div class="cta"><input id="entity-position-name" placeholder="Name this position" aria-label="Position name"><button id="save-entity-position" class="btn sm" disabled>Save position</button><button id="export-entity-position" class="btn ghost sm" disabled>Download position</button></div>
+      <div id="entity-positions"></div>
+    </section>
+    <details class="panel"><summary>Run receipt &amp; exact scope</summary>
+      <p>Receipts capture the graph and schema snapshots, selected policy source, helper source, runtime build record, hashes, ordered pair, result and active claims. Restoring a position re-executes code and Z3.</p>
+      <p>This is a concrete observation over supplied data. Z3 does not prove the OCaml function correct or treat similarity as mathematical equality. The verified veri7vn mass kernel remains available in the <a href="kernel-lab.html">mass experiment</a>; its proof does not transfer to these entity functions.</p>
+      <pre id="entity-receipt"></pre>
+    </details>
+  </main>
+  <script src="vendor/z3/z3-built.js"></script><script type="module" src="kernels/entities.js"></script>
+</body></html>

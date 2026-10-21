@@ -5,6 +5,12 @@ Rust/Wasm claim engine and Z3. Open `site/kernel-lab.html` through the same stat
 server as the workbench. No Isabelle or OCaml installation is needed to use the
 committed browser builds.
 
+The companion **[entity equality lab](../../site/entity-lab.html)** extends this
+to knowledge-graph entities, schema inheritance and user-overridden OCaml equals
+functions, including embedding comparisons. See [ENTITIES.md](ENTITIES.md) for
+the executable interface, data formats, solver scope and tests. The entity
+functions do not inherit the reference mass kernel's proof.
+
 The reference is exported from veri7vn commit
 `093b59af26ff1aecaada0f5e7bda998fb2f8b6d1`. It invokes the existing
 `Quantity.kernel (MassOf material (Some (volume, U_litre)) U_kilogram)`.
@@ -72,8 +78,9 @@ generated-source hash, user-source hash, both results, and current active claims
 The run hash and position hash distinguish the computation from the active
 claim selection. Named alternatives persist under `wmt.kernel-lab.v1`; they
 include source and can also be downloaded as JSON. Existing workbench data under
-`wmt.tree.v2` is untouched. This experiment uses WMT snapshots; adopting Universal
-Weave and a general knowledge-graph schema layer remain subsequent work.
+`wmt.tree.v2` is untouched. The entity lab adds a graph/schema layer under its own
+store; both experiments use WMT snapshots. Universal Weave history integration
+remains subsequent work.
 
 ## What is checked
 
@@ -125,9 +132,11 @@ browser toplevels. Runtime files are committed because the site is static.
 
 ```sh
 node --test e2e/kernel-model.test.mjs
+node --test e2e/entity-model.test.mjs
 cd e2e && npm ci
 BASE=http://localhost:8799/ node kernels.mjs
 BASE=http://localhost:8799/ node e2e.mjs
+BASE=http://localhost:8799/ node entities.mjs
 ```
 
 Use `PW_CHANNEL=chrome` for an installed Chrome, or install Playwright Chromium.

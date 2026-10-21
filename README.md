@@ -209,6 +209,12 @@ the browser; Wasm-GC is the default and `?runtime=js` selects the JavaScript
 backend. WMT and Z3 check claims conditional on the computed comparison.
 The original workbench and its saved branches remain compatible.
 
+Open `site/entity-lab.html` for knowledge-graph entities with schema-defined,
+overridable OCaml equals functions. Inherit typed fields, compare embeddings
+exactly or by cosine threshold, and use graph relationships inside your policy.
+WMT checks concrete match claims while preserving distinct entity IDs. See the
+[entity contract and examples](experiments/kernels/ENTITIES.md).
+
 See [the experiment](experiments/kernels/README.md) for examples, the kernel
 contract, exact proof scope, build instructions and browser tests.
 
