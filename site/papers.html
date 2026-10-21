@@ -10,7 +10,7 @@
     <div id="paper-error" role="alert"></div><div id="paper-progress" role="status" aria-live="polite"></div><button class="btn ghost sm" id="cancel-paper-operation" disabled>Cancel current operation</button>
     <section class="panel bucket-panel"><div class="section-heading"><div><p class="kick">01 · Your world model</p><h2>Buckets &amp; trajectories</h2></div><button class="btn ghost sm" id="load-bucket-demo">Load two demo buckets</button></div>
       <div class="paper-controls"><label>Active bucket<select id="bucket-select"><option value="">Create or load a bucket</option></select></label><label>Acting as<input id="actor-id" value="person:me"></label><label>Compare with<select id="bucket-compare"><option value="">Choose a second bucket</option></select></label></div>
-      <div id="bucket-summary" aria-live="polite"><p class="muted">A personal bucket holds your confirmed assumptions. An RFC bucket is a separate model with its own versions.</p></div><div id="bucket-comparison"></div>
+      <div id="bucket-summary" aria-live="polite"><p class="muted">A personal bucket holds your confirmed assumptions. An RFC bucket is a separate model with its own versions.</p></div><div id="bucket-comparison"></div><div id="bucket-trajectories"></div>
       <details><summary>Create a named bucket</summary><div class="paper-controls"><label>Name<input id="new-bucket-name" value="My world model"></label><label>Scope<select id="new-bucket-scope"><option value="personal">Personal</option><option value="rfc">RFC-scoped</option></select></label><label>RFC revision reference<input id="new-bucket-rfc" placeholder="RFC-0041@draft-a"></label></div>
         <label>Initial claims (optional; controlled language)<textarea id="initial-bucket-claims" placeholder="All birds are fliers."></textarea></label><button class="btn sm" id="create-bucket">Create bucket</button>
       </details>
@@ -39,8 +39,8 @@
       <div class="cta"><button class="btn sm" id="check-paper-proofs" disabled>Run installed proof checkers</button></div><div id="paper-proofs" aria-live="polite"><p class="muted">No computational evidence attached.</p></div>
       <p class="small muted">Lean, Isabelle and custom artifacts can travel with the submission. They remain “attached, not checked” unless the host installs their exact verifier. This page runs the WMT/Z3 entailment checker.</p>
     </section>
-    <section class="panel"><div class="section-heading"><div><p class="kick">05 · Your bucket decides</p><h2>Check &amp; branch</h2></div><button class="btn warm" id="submit-to-bucket" disabled>Check &amp; append if coherent</button></div>
-      <div id="bucket-verdict" class="statusbar muted" data-status="not_run" aria-live="polite">Review a paper and choose a bucket first.</div><div id="bucket-positions"></div><div id="bucket-conflicts"></div>
+    <section class="panel" id="paper-coherence-panel"><div class="section-heading"><div><p class="kick">05 · Your bucket decides</p><h2>Check &amp; branch</h2></div><button class="btn warm" id="submit-to-bucket" disabled>Check &amp; append if coherent</button></div>
+      <div id="bucket-verdict" class="statusbar muted" data-status="not_run" aria-live="polite">Review a paper and choose a bucket first.</div><div id="bucket-coherence"></div><div id="bucket-positions"></div><details><summary>Minimal conflict claim lists</summary><div id="bucket-conflicts"></div></details>
       <p class="small muted">This is the original WMT coherence lattice: maximal consistent positions, irreducible conflicts, entrenchment-weighted repairs and acceptance across positions. Adopting a position creates a fork; it never overwrites the conflicted bucket. Unknown, timeout and capped searches never append.</p>
       <details><summary>Exact insertion / conflict receipt</summary><pre id="bucket-receipt"></pre></details>
     </section>

@@ -1,6 +1,7 @@
 import {createWorkerClient,BucketRepository,createSubmission,formalizeSubmission,reviewSubmission,restoreSubmission,
   controlledParser,DEMO_VOCABULARY,EMPTY_IR,mergeIR,formalizerPrompt,makeEntailmentProof,validateProof,verifySubmissionProofs,
   compareBuckets,exportSidecar,requireThat,clone} from '../sdk/index.mjs';
+import {mountCoherenceView,mountTrajectoryView} from './coherence-view.mjs';
 
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const client=createWorkerClient(()=>new Worker(new URL('./worker.js',import.meta.url)));
@@ -29,6 +30,7 @@ function clearResult() {
   receipt=null;$('bucket-verdict').dataset.status='not_run';$('bucket-verdict').className='statusbar muted';
   $('bucket-verdict').textContent='No current check — review the paper and submit it to this exact bucket version.';
   $('bucket-positions').replaceChildren();$('bucket-conflicts').replaceChildren();$('bucket-receipt').textContent='';
+  $('bucket-coherence').replaceChildren();
 }
 function renderBuckets(preferred=$('bucket-select').value) {
   const buckets=repository.list();
@@ -39,6 +41,11 @@ function renderBuckets(preferred=$('bucket-select').value) {
   $('bucket-compare').value=compare;renderBucketSummary();updateControls();
 }
 function renderBucketSummary() {
+  mountTrajectoryView($('bucket-trajectories'),{workspace:repository.export(),activeId:$('bucket-select').value,onSelect:version=>{
+    $('bucket-select').value=version.id;
+    $('bucket-compare').value=JSON.stringify({id:version.id,version:version.version});
+    renderBucketSummary();clearResult();updateControls();
+  }});
   const b=activeBucket();
   if(!b){$('bucket-summary').innerHTML='<p class="muted">Create a bucket or load the two demo models.</p>';$('bucket-comparison').replaceChildren();return;}
   const versions=repository.export().versions.filter(v=>v.id===b.id);
@@ -90,9 +97,12 @@ function renderReceipt() {
   $('bucket-verdict').textContent=r.outcome==='inserted'?`Coherent — appended ${r.addedClaimIds.length} claims. Bucket ${r.after.id} is now version ${r.after.version}.`:r.outcome==='conflict'?`Conflict — bucket ${r.before.id} is unchanged at version ${r.before.version}.` : r.outcome==='unchanged'?'Coherent — these claims are already present. Bucket unchanged.':`No append — ${a.stopReason}: ${a.message??'No complete verdict.'}`;
   $('bucket-receipt').textContent=JSON.stringify(r,null,2);
   const source=new Map(r.inputIR.claims.map(c=>[c.id,c.source]));
+  mountCoherenceView($('bucket-coherence'),{receipt:r,submission:paper,beforeBucket:repository.get(r.before.id,r.before.version),onPosition:index=>{
+    document.querySelectorAll('[data-position-card]').forEach(card=>card.classList.toggle('selected-position',Number(card.dataset.positionCard)===index));
+  }});
   $('bucket-conflicts').innerHTML=a.conflicts.map((ids,i)=>`<div class="bucket-snapshot"><b>Irreducible conflict ${i+1}</b><ul>${ids.map(id=>`<li>${escape(source.get(id))}</li>`).join('')}</ul></div>`).join('');
   if(!a.complete){$('bucket-positions').replaceChildren();return;}
-  $('bucket-positions').innerHTML=`<p class="small">${a.positions.length} maximal coherent position${a.positions.length===1?'':'s'} · ${a.conflicts.length} irreducible conflicts · ${a.acceptance.skeptical.length} claims kept in every position. Least entrenchment to give up: ${a.repair?.weight??0}.</p><div class="position-grid">${a.positions.map((p,i)=>`<article class="coherent-position"><h3>Position ${i+1}</h3><p>Keeps ${p.keep.length}/${r.inputIR.claims.length} claims.</p><b class="small">Concedes</b><ul>${p.drop.map(id=>`<li>${escape(source.get(id))}</li>`).join('')||'<li>Nothing.</li>'}</ul><details><summary>Retained claims</summary><ul>${p.keep.map(id=>`<li>${escape(source.get(id))}</li>`).join('')}</ul></details>${r.outcome==='conflict'?`<label>Fork name<input data-fork-name="${i}" value="Alternative ${i+1}"></label><button class="btn ghost sm" data-adopt-position="${i}">Adopt as a new bucket fork</button>`:''}</article>`).join('')}</div>`;
+  $('bucket-positions').innerHTML=`<h3 class="position-cards-heading">Choose a coherent trajectory</h3><div class="position-grid">${a.positions.map((p,i)=>`<article class="coherent-position" data-position-card="${i}"><h3>Position ${i+1}</h3><p>Keeps ${p.keep.length}/${r.inputIR.claims.length} claims.</p><b class="small">Concedes</b><ul>${p.drop.map(id=>`<li>${escape(source.get(id))}</li>`).join('')||'<li>Nothing.</li>'}</ul><details><summary>Retained claims</summary><ul>${p.keep.map(id=>`<li>${escape(source.get(id))}</li>`).join('')}</ul></details>${r.outcome==='conflict'?`<label>Fork name<input data-fork-name="${i}" value="Alternative ${i+1}"></label><button class="btn ghost sm" data-adopt-position="${i}">Adopt as a new bucket fork</button>`:''}</article>`).join('')}</div>`;
   document.querySelectorAll('[data-adopt-position]').forEach(button=>button.onclick=()=>task('Creating a fork of this solver-verified position…',async()=>{
     const i=Number(button.dataset.adoptPosition),name=document.querySelector(`[data-fork-name="${i}"]`).value;
     const fork=await repository.fork(r.before.id,{receiptId:r.id,keepIds:r.analysis.positions[i].keep,newId:'bucket:'+crypto.randomUUID(),name,

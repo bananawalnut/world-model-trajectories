@@ -28,15 +28,43 @@ try {
   assert.equal(r.outcome,'conflict');assert.equal(r.analysis.positions.length,4);assert.equal(r.analysis.conflicts.length,2);
   assert.equal(await page.locator('#bucket-summary [data-version]').getAttribute('data-version'),'1');
   assert.equal(await page.locator('[data-adopt-position]').count(),4);
+  assert.match(await page.locator('.solver-state').textContent(),/UNSAT/);
+  assert.equal(await page.locator('[data-map-conflict]').count(),2);
+  assert.equal(await page.locator('[data-map-claim]').count(),r.inputIR.claims.length);
+  assert.equal(await page.locator('[data-conflict-edge]').count(),r.analysis.conflicts.reduce((n,c)=>n+c.length,0));
+  assert.equal(await page.locator('.position-matrix tbody tr').count(),r.inputIR.claims.length);
+  for(const [i,p] of r.analysis.positions.entries()) {
+    const cells=await page.locator(`.position-matrix tbody tr td:nth-of-type(${i+2})`).allTextContents();
+    assert.deepEqual(cells,r.inputIR.claims.map(c=>p.keep.includes(c.id)?'✓ Keep':'− Give up'));
+  }
+  await page.locator('[data-position="1"]').click();
+  assert.equal(await page.locator('.selected-position').getAttribute('data-position-card'),'1');
+  await page.locator('[data-map-conflict="0"]').focus();await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#coherence-inspector .inspected-claim').count(),r.analysis.conflicts[0].length);
+  const mappedIndex=r.inputIR.claims.findIndex(c=>c.id!=='c_background');
+  await page.locator(`[data-map-claim="${mappedIndex}"]`).focus();await page.keyboard.press('Space');
+  assert.match(await page.locator('#coherence-inspector').textContent(),/PDF page 1/);
+  if(process.env.PAPER_ARTIFACTS){await mkdir(process.env.PAPER_ARTIFACTS,{recursive:true});await page.locator('#bucket-coherence').screenshot({path:process.env.PAPER_ARTIFACTS+'/paper-coherence-desktop.png',style:'.nav { visibility:hidden !important; }'});}
   await page.locator('[data-fork-name="0"]').fill('Reviewed alternative');await page.locator('[data-adopt-position="0"]').click();await idle();
   assert.match(await page.locator('#bucket-summary').textContent(),/Reviewed alternative/);
   assert.match(await page.locator('#bucket-summary').textContent(),/From bucket:personal-demo @ v1/);
+  assert.equal(await page.locator('#bucket-trajectories .trajectory-child').count(),1);
+  assert.match(await page.locator('#bucket-trajectories').textContent(),/Coherent fork/);
+  assert.equal(await page.locator('#bucket-coherence').textContent(),'','Fork clears stale receipt visualizations');
   await page.selectOption('#bucket-select','bucket:personal-demo');assert.equal(await page.locator('#bucket-summary [data-version]').getAttribute('data-version'),'1');
   const compareOption=await page.locator('#bucket-compare option').evaluateAll(opts=>opts.find(o=>o.textContent.includes('Reviewed alternative')).value);
   await page.selectOption('#bucket-compare',compareOption);assert.match(await page.locator('#bucket-comparison').textContent(),/Only in/);
   console.log('PASS original WMT lattice, immutable personal conflict, coherent fork and versioned bucket comparison');
   await page.selectOption('#bucket-select','bucket:rfc-demo');await click('submit-to-bucket');r=await receipt();
   assert.equal(r.outcome,'inserted');assert.equal(r.after.version,2);assert.equal(r.addedClaimIds.length,4);
+  assert.match(await page.locator('.solver-state').textContent(),/SAT · all/);
+  assert.equal(await page.locator('[data-map-conflict]').count(),0);
+  assert.equal(await page.locator('.position-matrix .given-up').count(),0);
+  if(process.env.PAPER_ARTIFACTS)await page.locator('#bucket-trajectories').screenshot({path:process.env.PAPER_ARTIFACTS+'/paper-trajectories-desktop.png',style:'.nav { visibility:hidden !important; }'});
+  const v1=await page.locator('[data-trajectory-node]').evaluateAll(nodes=>nodes.find(n=>n.getAttribute('aria-label')==='RFC paper model version 1').dataset.trajectoryNode);
+  await page.locator(`[data-trajectory-node="${v1}"]`).click();
+  assert.match(await page.locator('#bucket-comparison').textContent(),/v2 ↔ RFC paper model v1/);
+  assert.equal(await page.locator('#bucket-coherence').textContent(),'');
   await click('submit-to-bucket');r=await receipt();assert.equal(r.outcome,'unchanged');assert.equal(r.after.version,2);
   const [sidecarDownload]=await Promise.all([page.waitForEvent('download'),page.click('#download-paper-sidecar')]);
   const sidecar=JSON.parse(await readFile(await sidecarDownload.path(),'utf8'));
@@ -57,13 +85,51 @@ try {
   await click('confirm-paper-review');await click('check-paper-proofs');assert.equal(await page.locator('.evidence-card.checked').count(),1);
   await page.selectOption('#bucket-select','bucket:personal-demo');await click('submit-to-bucket');assert.equal((await receipt()).outcome,'conflict');
   console.log('PASS separate RFC append, exact versions, full sidecar export, explicit workspace restore and original stores preserved');
+  // A genuine three-way MUS: all pairs are satisfiable. The picture must keep
+  // one conflict group with three incidence lines, never three pairwise attacks.
+  const triple=await page.evaluate(async()=>{
+    const {createWorkerClient}=await import('./sdk/index.mjs');
+    const client=createWorkerClient(()=>new Worker(new URL('./papers/worker.js',location.href)));
+    const pred=name=>({op:'pred',name,args:[]});
+    const ir={sorts:[],preds:[{name:'A',args:[]},{name:'B',args:[]}],funcs:[],claims:[
+      {id:'c_a',source:'<img src=x onerror="window.injected=true"> A holds.',formula:pred('A')},
+      {id:'c_b',source:'B holds.',formula:pred('B')},
+      {id:'c_not_both',source:'A and B do not both hold.',formula:{op:'not',x:{op:'and',xs:[pred('A'),pred('B')]}}}
+    ]};
+    const analysis=await client.analyze(ir),pairs=[];
+    for(let i=0;i<3;i++)pairs.push((await client.analyze({...ir,claims:ir.claims.filter((c,j)=>i!==j)})).status);
+    const {mountCoherenceView}=await import('./papers/coherence-view.mjs');
+    const root=document.querySelector('#bucket-coherence');
+    const receipt={inputIR:ir,analysis,before:{id:'Three-way model',version:1},outcome:'conflict'};
+    mountCoherenceView(root,{receipt});
+    window.renderCoherenceFixture=analysis=>mountCoherenceView(root,{receipt:{...receipt,analysis}});
+    return {analysis,pairs};
+  });
+  assert.equal(triple.analysis.conflicts.length,1);assert.equal(triple.analysis.conflicts[0].length,3);
+  assert.deepEqual(triple.pairs,['consistent','consistent','consistent']);
+  assert.equal(await page.locator('[data-map-conflict]').count(),1);assert.equal(await page.locator('[data-conflict-edge]').count(),3);
+  assert.equal(await page.locator('#bucket-coherence img').count(),0);assert.equal(await page.evaluate(()=>window.injected),undefined);
+  assert.match(await page.locator('#bucket-coherence').textContent(),/Some positions · 2\/3/);
+  await page.evaluate(()=>window.renderCoherenceFixture({complete:false,status:'unknown',stopReason:'solver_unknown',message:'Search incomplete',positions:[{keep:['c_a'],drop:[]}],conflicts:[['c_a','c_b','c_not_both']],repair:{drop:[],weight:0}}));
+  assert.match(await page.locator('.solver-state').textContent(),/Unresolved/);
+  assert.equal(await page.locator('.position-matrix').count(),0);assert.equal(await page.locator('.repair-guide').count(),0);
+  assert.equal(await page.locator('.map-claim.every,.map-claim.some,.map-claim.none').count(),0);
+  // All positions and conflict groups remain reachable when the view paginates.
+  await page.evaluate(()=>window.renderCoherenceFixture({complete:true,status:'inconsistent',stopReason:'completed',positions:Array.from({length:10},()=>({keep:['c_a','c_b'],drop:['c_not_both']})),conflicts:Array.from({length:10},()=>['c_a','c_b','c_not_both']),repair:{drop:['c_not_both'],weight:1}}));
+  assert.equal(await page.locator('[data-position]').count(),8);
+  await page.locator('[data-matrix-page="1"]').click();assert.equal(await page.locator('[data-position]').count(),2);
+  await page.locator('[data-position="9"]').click();assert.match(await page.locator('[data-position-summary]').textContent(),/Position 10/);
+  await page.locator('[data-conflict-page="1"]').click();assert.equal(await page.locator('[data-map-conflict]').count(),2);
+  console.log('PASS exact SAT position matrix, group conflicts, keyboard inspection, source anchors, trajectory parents, partial results, escaping and paginated views');
   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
   if(process.env.PAPER_ARTIFACTS) {
     await mkdir(process.env.PAPER_ARTIFACTS,{recursive:true});
     await writeFile(process.env.PAPER_ARTIFACTS+'/paper-sidecar-example.json',JSON.stringify(sidecar,null,2));
+    await click('submit-to-bucket');
     await page.evaluate(()=>scrollTo(0,0));await page.evaluate(()=>new Promise(requestAnimationFrame));
     await page.screenshot({path:process.env.PAPER_ARTIFACTS+'/paper-workbench-desktop.png',fullPage:true});
     await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.locator('#bucket-coherence').screenshot({path:process.env.PAPER_ARTIFACTS+'/paper-coherence-mobile.png',style:'.nav { visibility:hidden !important; }'});
     await page.screenshot({path:process.env.PAPER_ARTIFACTS+'/paper-workbench-mobile.png',fullPage:true});
   }
   console.log('PASS no browser errors or unexpected external calls; desktop and mobile layout');

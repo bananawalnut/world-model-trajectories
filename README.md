@@ -17,6 +17,18 @@ original WMT coherence lattice; the kernel labs remain optional tools alongside
 it. General prose uses configured extraction/formalization adapters or authored
 IR; the built-in parser has an explicit controlled grammar.
 
+The paper workbench restores the visual coherence field: a claim-to-conflict
+membership map, a claim-by-position SAT matrix, acceptance across every/some/no
+coherent positions, and the least-entrenchment repair. Selecting a claim shows
+its typed English rendering and PDF locator; selecting a position highlights
+the matching fork card. Conflict groups preserve higher-order disagreements
+without asserting that each pair conflicts. The trajectory tree connects exact
+immutable versions and coherent forks; selecting a version compares it with its
+current bucket. Large maps/matrices are scrollable and paginated without
+discarding positions. Unknown and incomplete checks show no exhaustive
+acceptance or repair. These are views of checked claim sets, not truth
+assignments to a model.
+
 ## The one idea
 
 **The tool does not parse natural language. You + your own LLM do, in the

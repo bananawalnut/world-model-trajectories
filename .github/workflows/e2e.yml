@@ -54,7 +54,7 @@ jobs:
           }, indent=2))
           PY
       - name: Check kernel adapter and committed artifacts
-        run: node --test e2e/kernel-model.test.mjs e2e/entity-model.test.mjs
+        run: node --test e2e/kernel-model.test.mjs e2e/entity-model.test.mjs e2e/coherence-view.test.mjs
       - name: Run e2e
         working-directory: e2e
         env:
