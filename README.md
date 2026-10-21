@@ -201,6 +201,17 @@ cd ../site && python3 -m http.server   # then open http://localhost:8000
 
 Or just open the deployed page and click **Load the penguin demo**.
 
+## Replaceable kernel experiment
+
+Open `site/kernel-lab.html` to compare an Isabelle-exported veri7vn mass
+calculation with an editable OCaml kernel and comparison function. Both run in
+the browser; Wasm-GC is the default and `?runtime=js` selects the JavaScript
+backend. WMT and Z3 check claims conditional on the computed comparison.
+The original workbench and its saved branches remain compatible.
+
+See [the experiment](experiments/kernels/README.md) for examples, the kernel
+contract, exact proof scope, build instructions and browser tests.
+
 ## License
 
 MIT OR Apache-2.0 for this project's code. Bundled Z3 is © Microsoft,

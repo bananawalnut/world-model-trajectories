@@ -5,6 +5,7 @@
 name: e2e (real browser)
 on:
   push: { branches: [main] }
+  pull_request: {}
   workflow_dispatch: {}
 jobs:
   e2e:
@@ -22,8 +23,17 @@ jobs:
         run: |
           python3 -m http.server 8799 --directory site >/tmp/srv.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://localhost:8799/ >/dev/null && break; sleep 1; done
+      - name: Check kernel adapter and committed artifacts
+        run: node --test e2e/kernel-model.test.mjs
       - name: Run e2e
         working-directory: e2e
         env:
           BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
         run: node e2e.mjs
+      - name: Run replaceable-kernel experiment in the browser
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node kernels.mjs

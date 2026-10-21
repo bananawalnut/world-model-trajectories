@@ -1,0 +1,5 @@
+site/kernels/ocaml-runtime.js linguist-generated=true
+site/kernels/ocaml-wasm.js linguist-generated=true
+site/kernels/ocaml-wasm.assets/*.wasm linguist-generated=true
+site/kernels/quantity.ml linguist-generated=true
+experiments/kernels/vendor/** linguist-vendored=true

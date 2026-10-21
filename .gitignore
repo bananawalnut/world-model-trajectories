@@ -1,5 +1,11 @@
 /crate/target
 **/*.rs.bk
+/e2e/node_modules/
+/.kernel-build/
+**/*.cmi
+**/*.cmo
+**/*.byte
+**/__pycache__/
 .DS_Store
 # NOTE: site/pkg/ (built wasm) and site/vendor/ (Z3) ARE committed on
 # purpose — the static demo must work on GitHub Pages with no build step.

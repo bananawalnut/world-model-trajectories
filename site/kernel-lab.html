@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kernel experiment · World-model trajectories</title>
+  <link rel="icon" href="data:,">
+  <script src="coi-serviceworker.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kernels/lab.css">
+</head>
+<body>
+  <nav class="nav"><span class="glyph">⊢</span><b>world-model trajectories</b><a href="index.html">Claim workbench</a><span id="lab-ready" class="z3">Loading OCaml and Z3…</span></nav>
+  <main class="wrap kernel-lab">
+    <header><p class="kick">Executable models · experiment</p><h1>Same claims.<br><em>Your choice of kernel.</em></h1>
+    <p class="lede">Run veri7vn’s extracted quantity calculation alongside an OCaml function you can edit. Choose which result the model uses, then let Z3 check your claim against it.</p></header>
+    <section class="panel">
+      <h2>The bucket</h2>
+      <p>One sample, its volume and reference density, and a mass you claim. Densities come from veri7vn’s reference table; they are assumptions about this sample.</p>
+      <div class="lab-inputs">
+        <label>Material<select id="material"><option value="0">Water · 1000 kg/m³</option><option value="1">Steel · 7850 kg/m³</option><option value="2">Petrol · 745 kg/m³</option></select></label>
+        <label>Volume, litres<input id="volume" value="100" inputmode="decimal"></label>
+        <label>Claimed mass, kilograms<input id="mass" value="120" inputmode="decimal"></label>
+        <label>Model uses<select id="selected-kernel"><option value="reference">veri7vn reference</option><option value="user">My OCaml kernel</option></select></label>
+      </div>
+      <div class="cta"><button class="btn warm" id="run-kernels" disabled>Run &amp; check claims</button><span id="run-progress" role="status"></span></div>
+      <p class="muted small">Exact decimal inputs become rational numbers. Changing an input or code invalidates the previous result until you run again.</p>
+    </section>
+    <div class="instrument">
+      <section class="panel"><h2>My kernel &amp; comparison</h2><p>Edit actual OCaml. The result is a fraction in kilograms or <code>None</code> for unsupported input. Comparison is a separate function.</p>
+      <label for="user-source" class="sr-only">OCaml kernel source</label><textarea id="user-source" spellcheck="false" aria-label="OCaml kernel source"></textarea>
+      <div class="cta"><button class="btn ghost sm" id="reset-code">Restore reference-compatible example</button></div>
+      <p class="small muted">Your code runs in a browser worker. The lab stops execution after 20 seconds; errors and unsupported results never become successful comparisons.</p></section>
+      <section class="panel"><h2>Comparison</h2><div id="kernel-results" aria-live="polite"><p class="muted">Run the model to compare implementations.</p></div><div id="kernel-error" role="alert"></div></section>
+    </div>
+    <section class="panel"><h2>Claims &amp; consequence</h2><p>The computed comparison is conditional on the exact input claims. Retract a premise below and Z3 checks the remaining position.</p>
+      <div id="lab-claims"></div><div id="lab-verdict" class="statusbar muted" aria-live="polite">No current result.</div><div id="lab-conflict"></div>
+    </section>
+    <section class="panel"><h2>Keep an alternative</h2><div class="cta"><input id="snapshot-name" placeholder="Name this position"><button class="btn sm" id="save-position" disabled>Save position</button><button class="btn ghost sm" id="export-position" disabled>Download position</button></div><div id="positions"></div></section>
+    <details class="panel"><summary>What ran, and what the proof covers</summary>
+      <p>The reference calls the existing <code>Quantity.kernel (MassOf …)</code>, exported by Isabelle to OCaml. <code>mass_from_volume</code> relates an exact result to its dimensions and mass = density × volume. The source module and build record are available below.</p>
+      <p>The OCaml/JSON interface, model adapter, and browser toolchain are tested components. Your edited kernel has no proof attached. Z3 checks the particular formalized claims; neither a passing comparison nor a theorem establishes that the sample has the assumed density.</p>
+      <p>An arbitrary user comparison is evaluated on these concrete inputs. It is not translated into a universal Z3 definition, and a successful match does not merge entity identities.</p>
+      <p><a href="kernels/quantity.ml">Extracted OCaml source</a> · <a href="kernels/build-receipt.json">Build record</a></p><pre id="run-receipt"></pre>
+    </details>
+  </main>
+  <script src="vendor/z3/z3-built.js"></script>
+  <script type="module" src="kernels/lab.js"></script>
+</body>
+</html>
