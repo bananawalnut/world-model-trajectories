@@ -58,3 +58,27 @@ test('API keeps review and revision gates, refuses claimed checker success, unkn
 test('API enforces its streaming body budget',async t=>{
   const call=await serve(t,{maxBodyBytes:128});const result=await call('/v1/submissions',{title:'x'.repeat(500)});assert.equal(result.status,413);assert.equal(result.body.code,'resource_limit');
 });
+test('API checks automatic witnesses and returns revision-bound defaults receipts without mutating the paper',async t=>{
+  const {makeWitnessProof}=await import('../index.mjs');
+  const call=await serve(t),p=await reviewed(call),ids=p.submission.review.ir.claims.map(c=>c.id);
+  const proof=await makeWitnessProof(p.submission,{id:'proof:auto',targetClaimId:ids[3],candidatePremiseIds:[ids[0],ids[2]]});
+  let r=await call(`/v1/submissions/${p.submission.id}/proofs`,{expectedRevision:p.revision,proofs:[proof]});assert.equal(r.status,200);let current=r.body;
+  r=await call(`/v1/submissions/${p.submission.id}/proofs/check`,{expectedRevision:current.revision});assert.equal(r.status,200);current=r.body;
+  assert.equal(current.submission.proofReceipts[0].result.status,'checked');assert.equal(current.submission.proofReceipts[0].checker.id,'wmt.smt-explanation-witness/1');
+  const request={expectedRevision:current.revision,request:{defaultClaimIds:[ids[0]],targetClaimId:ids[3]}};
+  r=await call(`/v1/submissions/${p.submission.id}/reasoning/defaults`,request);assert.equal(r.status,200);assert.equal(r.body.revision,current.revision);assert.equal(r.body.receipt.binding.irDigest,current.submission.review.irDigest);assert.equal(r.body.receipt.result.status,'selected');
+  const after=await call(`/v1/submissions/${p.submission.id}`);assert.deepEqual(after.body,current);
+  const sidecar=await call(`/v1/submissions/${p.submission.id}/sidecar`);assert.equal(sidecar.body.submission.proofReceipts[0].result.minimality,'inclusion');
+  const bad=await call(`/v1/submissions/${p.submission.id}/reasoning/defaults`,{...request,request:{...request.request,implicitDefaults:true}});assert.equal(bad.status,400);assert.equal(bad.body.code,'invalid_input');
+  assert.equal((await call(`/v1/submissions/${p.submission.id}/reasoning/defaults`,{...request,expectedRevision:0})).status,409);
+  const caps=(await call('/v1/capabilities')).body;assert(caps.proofCheckers.includes('smt-explanation-witness'));assert(caps.reasoningPolicies.includes('wmt.strict-specificity-greedy/1'));
+  const spec=(await call('/v1/openapi.json')).body;const {default:Ajv}=await import('ajv/dist/2020.js');const ajv=new Ajv({strict:false});const validate=ajv.compile({...spec.components.schemas.AnalyzeDefaults,components:spec.components});assert(validate(request),JSON.stringify(validate.errors));assert(!validate({...request,request:{defaultClaimIds:[],wat:true}}));
+});
+test('API enumerates entity defaults, preserves alternate extensions, and independently checks bucket forks',async t=>{
+ const {extensionIR,extensionRequest}=await import('../../papers/extensions-example.mjs');const call=await serve(t),base=(await call('/v1/buckets',{id:'extension-base',name:'Extension baseline',owner:'me'})).body.bucket;
+ const body={expectedVersion:1,expectedDigest:base.digest,actorId:'me',candidateIR:extensionIR,request:extensionRequest};let r=await call('/v1/buckets/extension-base/default-extensions',body);assert.equal(r.status,200);const receipt=r.body.receipt;assert.equal(receipt.result.extensions.length,4);assert.equal(receipt.result.preferredExtensionIds.length,2);const e=receipt.result.extensions.find(e=>e.preferred);
+ r=await call('/v1/buckets/extension-base/extension-forks',{receiptId:receipt.id,extensionId:e.id,newId:'extension-fork',name:'Checked extension',actorId:'me',expectedVersion:1,expectedDigest:base.digest});assert.equal(r.status,201);assert.equal(r.body.bucket.provenance.creationEvidence.status,'consistent');assert.equal((await call('/v1/buckets/extension-base')).body.bucket.digest,base.digest);
+ const paper=await reviewed(call);r=await call('/v1/buckets/extension-base/default-extensions',{expectedVersion:1,expectedDigest:base.digest,actorId:'me',submissionId:paper.submission.id,submissionRevision:paper.revision,request:{defaultClaimIds:[],targetClaimId:paper.submission.review.ir.claims.at(-1).id}});assert.equal(r.status,200);assert.equal(r.body.receipt.sourceBinding.documentHash,paper.submission.document.sha256);
+ const sidecar=(await call(`/v1/submissions/${paper.submission.id}/sidecar`)).body;assert.equal(sidecar.extensionReceipts.length,1);assert(sidecar.extensionReceipts.every(r=>r.sourceBinding.submissionId===paper.submission.id));
+ const api=(await call('/v1/openapi.json')).body,{default:Ajv}=await import('ajv/dist/2020.js'),ajv=new Ajv({strict:false});const validate=ajv.compile({...api.components.schemas.BucketExtensions,components:api.components});assert(validate(body),JSON.stringify(validate.errors));assert(!validate({...body,submissionId:'both',submissionRevision:1}));
+});

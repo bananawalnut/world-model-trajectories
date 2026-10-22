@@ -23,6 +23,8 @@ jobs:
         run: node --test --test-concurrency=1 site/sdk/test/*.test.mjs
       - name: Type-check the SDK against a Castalia consumer
         run: npm run test:types --prefix site/sdk
+      - name: Type-check authored definition draft adapters
+        run: site/sdk/node_modules/.bin/tsc --noEmit --strict --skipLibCheck --module NodeNext --target ES2022 --lib ES2022,DOM site/papers/formal-drafts.d.mts site/papers/reviewed-draft.d.mts
   e2e:
     runs-on: ubuntu-latest
     steps:
@@ -87,3 +89,15 @@ jobs:
           BASE: http://localhost:8799/
           PW_CHANNEL: chromium
         run: node walkthrough.mjs
+      - name: Check defaults, entity exceptions, collective conflicts and witnesses
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node reasoning.mjs
+      - name: Review synthetic definitions and admit exact code into checked buckets
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node definitions.mjs

@@ -16,7 +16,8 @@ const adaptersSha256={};
 for(const name of (await readdir(sdk)).filter(name=>name.endsWith('.mjs')).sort())adaptersSha256[name]=await sha(new URL(name,sdk));
 const standardFontsSha256={};
 for(const name of (await readdir(new URL('standard_fonts/',pdf))).sort())standardFontsSha256[name]=await sha(new URL('standard_fonts/'+name,pdf));
-const manifest={format:'wmt.sdk-runtime/1',sdkVersion:'0.1.0-experimental.1',engine:'wmt-core',engineRevision:'sha256:'+files['wmt_core_bg.wasm'],
+const sdkVersion=JSON.parse(await readFile(new URL('package.json',sdk))).version;
+const manifest={format:'wmt.sdk-runtime/1',sdkVersion,engine:'wmt-core',engineRevision:'sha256:'+files['wmt_core_bg.wasm'],
   solver:'z3-solver/4.16.0',solverWasmSha256:await sha(new URL('site/vendor/z3/z3-built.wasm',root)),logicProfile:'wmt.strict-many-sorted-fol/1',files,adaptersSha256,
   browserAdapterSha256:await sha(new URL('site/papers/worker.js',root)),
   pdfjs:{version,moduleSha256:await sha(new URL('pdf.mjs',pdf)),workerSha256:await sha(new URL('pdf.worker.mjs',pdf)),standardFontsSha256}};

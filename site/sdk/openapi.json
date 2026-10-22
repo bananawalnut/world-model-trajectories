@@ -711,6 +711,171 @@
           }
         ]
       }
+    },
+    "/v1/submissions/{submissionId}/reasoning/defaults": {
+      "post": {
+        "summary": "Analyze explicit defaults in a reviewed interpretation; return a separate source-bound receipt without changing the submission or strict buckets",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeDefaults"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/buckets/{bucketId}/default-extensions": {
+      "post": {
+        "summary": "Enumerate all grounded normal-default extensions for an exact strict parent bucket",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketExtensions"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/buckets/{bucketId}/extension-forks": {
+      "post": {
+        "summary": "Freshly check an enumerated extension and adopt it as an immutable bucket fork",
+        "responses": {
+          "201": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdoptExtension"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1570,6 +1735,10 @@
           },
           "limits": {
             "$ref": "#/components/schemas/Limits"
+          },
+          "enumeratePositions": {
+            "type": "boolean",
+            "default": true
           }
         },
         "required": [
@@ -1631,6 +1800,213 @@
           "newId",
           "name"
         ]
+      },
+      "DefaultsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "defaultClaimIds"
+        ],
+        "properties": {
+          "defaultClaimIds": {
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "targetClaimId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy": {
+            "const": "wmt.strict-specificity-greedy/1"
+          }
+        }
+      },
+      "AnalyzeDefaults": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "request"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "request": {
+            "$ref": "#/components/schemas/DefaultsRequest"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          }
+        }
+      },
+      "ExtensionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "defaultClaimIds"
+        ],
+        "properties": {
+          "defaultClaimIds": {
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "targetClaimId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "policy": {
+            "const": "wmt.named-normal-extensions/1"
+          },
+          "entities": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "sort"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "sort": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BucketExtensions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion",
+          "expectedDigest",
+          "actorId",
+          "request"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "request": {
+            "$ref": "#/components/schemas/ExtensionsRequest"
+          },
+          "submissionId": {
+            "type": "string"
+          },
+          "submissionRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "candidateIR": {
+            "$ref": "#/components/schemas/WmtIR"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "candidateIR"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "submissionId"
+                  ]
+                },
+                {
+                  "required": [
+                    "submissionRevision"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "submissionId",
+              "submissionRevision"
+            ],
+            "not": {
+              "required": [
+                "candidateIR"
+              ]
+            }
+          }
+        ]
+      },
+      "AdoptExtension": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "receiptId",
+          "extensionId",
+          "newId",
+          "name",
+          "actorId",
+          "expectedVersion",
+          "expectedDigest"
+        ],
+        "properties": {
+          "receiptId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "extensionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDigest": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     }
   }

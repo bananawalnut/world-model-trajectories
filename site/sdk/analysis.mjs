@@ -1,3 +1,5 @@
+import {createExtensionsRunner} from './default-extensions.mjs';
+import {createReasoningRunner,collectiveConflicts} from './reasoning.mjs';
 import {requireThat,digest,clone} from './hash.mjs';
 import {validateIR,LOGIC_PROFILE} from './ir.mjs';
 export const DEFAULT_LIMITS={maxSteps:3000,solverTimeoutMs:1500,wallTimeMs:30000};
@@ -53,10 +55,17 @@ export function createAnalysisRunner({createEngine,evaluate,runtime}) {
       repairs.sort((a,b)=>a.weight-b.weight || a.drop.length-b.drop.length || a.drop.join(',').localeCompare(b.drop.join(',')));
       return {format:'wmt.analysis/1',status:lattice.consistent?'consistent':'inconsistent',complete:true,stopReason:'completed',
         profile:LOGIC_PROFILE,limits,steps,runtime:clone(runtime),inputDigest:await digest('ir',ir),
-        positions,conflicts:lattice.mus,repair:repairs[0]??null,acceptance:lattice.af,
+        positions,conflicts:lattice.mus,repair:repairs[0]??null,acceptance:{...lattice.af,attackSemantics:'legacy-co-membership-only'},conflictSemantics:collectiveConflicts(lattice.mus),
         renderedClaims:JSON.parse(engine.meta()).claims,engineState:engine.export_state()};
     } catch(error) {if(error.name==='ContractError')return stopped(error.code,error.message);return stopped(error.reason??'error',String(error.message??error));}
     finally {engine?.free?.();}
+  }
+  async function consistency(ir,budgets={}) {
+    const limits=limitsFor(budgets);let engine;
+    try{engine=engineFor(ir);const answer=await evalScript(engine.smt_check(),limits);
+      return {format:'wmt.consistency/1',status:answer.split('\n')[0]==='sat'?'consistent':'inconsistent',complete:true,stopReason:'completed',profile:LOGIC_PROFILE,limits,steps:1,runtime:clone(runtime),inputDigest:await digest('ir',ir),renderedClaims:JSON.parse(engine.meta()).claims,engineState:engine.export_state()};
+    }catch(error){return {...stopped(error.reason??error.code??'error',String(error.message??error)),format:'wmt.consistency/1'};}
+    finally{engine?.free?.();}
   }
   async function entailment(ir,{targetClaimId,premiseClaimIds},budgets={}) {
     const limits=limitsFor(budgets);let engine;
@@ -74,7 +83,7 @@ export function createAnalysisRunner({createEngine,evaluate,runtime}) {
     } catch(error) {return {status:'unsupported',stopReason:error.reason??error.code??'error',reason:String(error.message??error)};}
     finally {engine?.free?.();}
   }
-  return {analyze,entailment};
+  return {analyze,entailment,consistency,...createReasoningRunner({engineFor,evalScript,limitsFor,runtime}),...createExtensionsRunner({engineFor,evalScript,limitsFor,runtime})};
 }
 export function renderIR(createEngine,ir) {
   const engine=initializeEngine(createEngine,ir);

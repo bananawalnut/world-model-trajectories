@@ -1,6 +1,8 @@
 # WMT paper sidecar SDK
 
-`@wmt/paper-sdk@0.1.0-experimental.1` is a runnable SDK and loopback HTTP API for
+The public synthetic example groups symbols, definitions and uses, then connects an explicitly reviewed draft to a checked bucket.
+
+`@wmt/paper-sdk@0.1.0-experimental.5` is a runnable SDK and loopback HTTP API for
 paper submissions, versioned personal/RFC buckets, and computational evidence.
 The browser consumer is [`../papers.html`](../papers.html). The existing claim,
 entity-equality and veri7vn mass workbenches remain available.
@@ -9,6 +11,46 @@ This is an **experimental unsigned package**, not a published npm release or a
 completed Castalia Gate 0 release. Castalia remains responsible for identity,
 registration, peer review, repository acceptance and journal publication. The
 SDK produces attributed evidence, not any of those decisions.
+
+## Definition review and retained candidates (.5)
+
+The public [synthetic definition example](../definitions.html) groups repeated
+introductions and equations into a single symbol defined in the paper, with
+source references, notation forms and statement uses. Its PDF is generated from
+an explicitly authored software fixture; no private paper is bundled.
+
+Merge duplicate entries, separate a mistaken link, select a defining passage,
+and correct definition/introduction/application/reference roles. Original text,
+locators, scopes and extraction IDs remain immutable. Formatting/case variants
+of natural names can share an entry; single-letter case, mathematical alphabets
+and local declarations in different named results remain distinct. Linking two
+forms does not prove they have equivalent types or meanings.
+
+`wmt.definition-review/1` is separate from strict formalization. Validation
+reconstructs exact occurrences, checks their editable partition and checksum,
+and rejects changed source metadata, duplicate assignments and invalid primary
+definitions. SDK exports include `buildDefinitionReview`,
+`validateDefinitionReview`, `definitionConcepts`, `mergeDefinitionConcepts`,
+`updateDefinitionConcept`, `separateDefinitionOccurrences`,
+`moveDefinitionOccurrence`, and `restoreDefinitionOrganization`.
+
+**Principles & candidates** retains ambiguous ideas while they are reworked.
+Keep for formalization, wording reviewed, and reversible set-aside are review
+states, not proof or bucket-admission verdicts. Existing candidate feedback
+formats remain compatible. Browser feedback exports add optional
+`definitionReview` and `formalDrafts`, bound to the exact source/extraction;
+older exports still load. Draft IR has a live mathematical preview. Invalid
+code cannot replace a valid saved draft. Opaque declarations assert nothing.
+
+The browser adapter `papers/reviewed-draft.mjs` connects an authored formula to
+the existing SDK proposal/review/bucket API. It qualifies custom names by paper
+and draft revision, maps every formula to the chosen exact source passage, and
+requires a separate local review. Editing code invalidates that review. A fresh
+full-conjunction SAT check can append to a sandbox bucket; a conflicting bucket
+is unchanged. All other candidates remain outside that single-passage review.
+The example relation remains primitive: a checked definition is not a measured
+fact or an authenticated author signature. Exported receipts and sidecars keep
+those boundaries explicit.
 
 ## The central operation: a person's bucket
 
@@ -22,13 +64,20 @@ source-to-formula mappings and the bucket's exact pre-run version **and digest**
 The SDK merges that reviewed subset with the bucket and runs the existing
 Rust/Wasm WMT MARCO lattice against real Z3:
 
-- **Consistent, complete:** append new claims in one attributed operation and
-  emit an insertion receipt for the new immutable bucket version.
-- **Inconsistent, complete:** emit a conflict receipt and leave the bucket
-  unchanged. Return every maximal coherent position and irreducible conflict.
-- **Unknown, error, timeout, cancellation, enumeration cap, or step budget:**
-  emit a stop result; never append or present a complete consistency verdict.
-- **Already present:** emit an unchanged receipt; do not create another version.
+- **Full conjunction SAT:** append in one attributed operation, without requiring
+  MARCO enumeration. The only maximal position of a consistent full set is the
+  full set, so this position can be returned directly.
+- **Full conjunction UNSAT:** return a conflict and leave the bucket unchanged.
+  Optional MARCO enumeration explains minimal conflicts and coherent repairs.
+  Its budget can run out without erasing the independently known UNSAT verdict.
+  Pass `enumeratePositions:false` to skip those diagnostics.
+- **Consistency UNKNOWN, error, timeout, or cancellation:** never append.
+- **Already present and SAT:** return unchanged without another bucket version.
+
+`receipt.consistency` is the direct, digest-bound full-conjunction verdict.
+`receipt.analysis` retains the existing repair/enumeration shape. A known
+conflict with incomplete diagnostics authorizes no repair fork. Old clients
+without the new consistency method retain the former guarded analysis path.
 
 Versions are compared again **after** solving. Concurrent writes cannot
 overwrite one another. An idempotency key replays the exact original result;
@@ -350,3 +399,458 @@ consumer checks the SDK exports. Browser tests upload an actual PDF, confirm
 four mappings, check evidence, fork a coherent alternative, append to a separate
 RFC bucket, export/reload, recheck, and preserve the original app's stores.
 Live third-party model calls and external proof checkers are not CI-verified.
+
+## Structured proof candidates and extraction feedback
+
+The opt-in `wmt.proof-candidates/1` selector complements the unchanged
+`wmt.pdf-text-sentences/1` baseline. It joins wrapped text within a page,
+retains labeled results and formula/declaration blocks, and can select a local
+`Let ...` span inside a named result. It still extracts a **partial** candidate
+set: it does not reconstruct cross-page statements, complete PDF layout,
+mathematical expression trees, or lexical scope.
+
+```js
+import {
+  createSubmission, PROOF_CANDIDATE_POLICY, selectProofSpans,
+  buildCandidateReview, updateCandidateFeedback
+} from '@wmt/paper-sdk';
+
+const submission = await createSubmission(input, client, {
+  claimExtractor: {id: PROOF_CANDIDATE_POLICY, select: selectProofSpans}
+});
+let candidateReview = await buildCandidateReview(
+  submission.document, submission.extraction
+);
+candidateReview = await updateCandidateFeedback(candidateReview, sourceClaimId, {
+  role: 'lemma', scopeType: 'local', scopeLabel: 'Only in this proof',
+  disposition: 'needs_change', note: 'Retain the surrounding assumption.'
+});
+```
+
+`wmt.candidate-review/1` separates a passage's suggested role from its source
+text, epistemic grade, formalization and proof status. Roles include schema,
+definition, notation, axiom, assumption, hypothesis, conjecture, statement,
+proposition, lemma, theorem, corollary, proof step, observation, example,
+construction, case, goal, algorithm and question. A source label such as
+"Theorem" is retained as a label; it is not evidence that a theorem was proved.
+Calling a passage an axiom records a proposed assumption, not its truth.
+
+The review binds the exact document hash and extraction digest. It retains
+source order, suggested declarations, expression-bound variables, explicit
+source references, unresolved references and ambiguity notes. A contained
+local declaration retains a parent source candidate. A preceding result label
+is only contextual evidence: without an established endpoint its extent remains
+unresolved. The definitions index collects source passages wherever they occur;
+it does not promote a local or unknown-scope declaration to global scope.
+
+The UI offers review order (definitions, premises, results, proof material),
+original paper order, and groups based on labeled results and explicit source
+references. These groups are not an inferred or verified proof dependency graph.
+Role, scope, interpretation, disposition and note feedback is saved in browser
+storage under the exact extraction binding and can be exported/imported as
+`wmt.candidate-review-bundle/1`. A changed source or extraction is rejected on
+import. Browser feedback is self-attributed and does not confirm source-to-IR
+mappings, run proof checkers, or mutate a bucket.
+
+"Birds are normally fliers" remains a candidate statement with alternative
+interpretations: a defeasible rule, an explicitly weakened existential rewrite,
+a statistical prevalence/expectation statement, or a restriction to normal cases.
+No interpretation is selected automatically. A statistical reading needs a
+population, measure, time/context and threshold or target expectation. For a
+binary property, its expected indicator is its proportion under that measure;
+"normally" alone does not choose a population or threshold. Choosing an option
+records extraction feedback only; it does not synthesize or accept an axiom.
+
+Compatibility: existing source claim IDs, saved cases, proposals, reviews,
+proof receipts and `SourceClaim.kind` remain unchanged. The rich roles live in
+this separate review artifact. The opt-in selector projects lemma/corollary/
+proposition to legacy `theorem`, schema/notation to `definition`, and assumption
+to `axiom` when constructing the old source record. The full distinctions remain
+in the candidate review. This allows the pinned closed Castalia publication
+schema to remain valid; a Castalia claim-set projection alone does not carry the
+richer taxonomy. Export the candidate review alongside the publication sidecar.
+
+The standard workbench and public synthetic walkthrough expose this review
+layer. Candidate extraction stays separate from explicitly reviewed formulas
+and their proof/bucket scenarios.
+
+
+## Collective conflicts, discovered witnesses, and explicit defaults (.3)
+
+Open [`../reasoning.html`](../reasoning.html) for three runnable examples.
+The computational evidence section of the generic workbench exposes the same
+operations as the standalone reasoning examples.
+
+### Whole conflicts and argumentation
+
+`analysis.conflicts` remains the authoritative list of inclusion-minimal
+inconsistent groups (MUS). The additive `analysis.conflictSemantics` records
+these groups and collective attacks: for each member `c` of a group `G`, the
+entire set `G \ {c}` collectively excludes `c`. In particular, `P`, `Q`, and
+`¬(P ∧ Q)` produce one three-way conflict, three two-premise collective attacks,
+and three coherent pairs. They do **not** produce three binary conflicts.
+A singleton inconsistent group produces an empty-premise collective exclusion.
+No Dung admissibility, preferred or stable extension equivalence is claimed.
+
+For old readers, `analysis.acceptance.attacks` still contains the legacy pair
+co-membership projection. It is deprecated for reasoning and is now explicitly
+labelled `attackSemantics: "legacy-co-membership-only"`. Use conflict groups or
+collective attacks instead. The other acceptance arrays still describe MSS
+membership (every/some/no maximal coherent position). Existing stored receipts
+without the new fields remain usable by the paper visualization, which reads
+`conflicts` directly. The original workbench now also draws whole groups and
+removes its former false binary-Dung equivalence claim. The core binary's legacy
+pair projection is unchanged; this release corrects its adapter/display meaning.
+
+### Automatically discover why a conclusion follows
+
+```js
+const result = await client.witness(review.ir, {
+  targetClaimId: 'conclusion',
+  // Optional: otherwise every other reviewed formula is a candidate premise.
+  candidatePremiseIds: ['definition', 'assumption', 'lemma']
+});
+// result.status === 'checked' => result.premiseClaimIds is one minimal support.
+const artifact = await makeWitnessProof(paper, {
+  id: 'proof:auto', targetClaimId: 'conclusion',
+  candidatePremiseIds: ['definition', 'assumption', 'lemma']
+});
+paper.proofs.push(artifact); // kind: smt-explanation-witness
+paper = await verifySubmissionProofs(paper, client);
+```
+
+The pipeline is:
+
+```mermaid
+flowchart LR
+  A[Reviewed IR and target] --> B[Exclude target from premise pool]
+  B --> C[Require consistent pool with Z3]
+  C --> D[Rust witness driver: unsat core and deletion shrinking]
+  D --> E[Independently recheck consistency and entailment]
+  E --> F[Final deletion checks including empty support]
+  F --> G[Source and formula bound proof receipt]
+```
+
+1. Validate the strict typed IR and unique premise IDs; reject a target included
+   as its own premise. Validate binding to the exact source and reviewed IR.
+2. Check the **whole candidate pool** is SAT. An inconsistent pool fails rather
+   than proving anything by explosion. Narrow it to a chosen coherent position
+   when needed. This operation does not search all consistent subsets of an
+   inconsistent pool.
+3. Run the unchanged Rust `witness_begin/next/feed/result` driver against Z3.
+   Every reply must be SAT/UNSAT without unexpected errors; UNKNOWN stops.
+4. Verify the returned IDs belong to the pool. Independently recheck that its
+   premises are SAT and their conjunction with the negated target is UNSAT.
+5. Delete each retained premise in turn and test again, dropping it if the
+   target remains entailed. This also handles a tautology's empty witness, where
+   the legacy driver can stop early on a singleton. Record the final necessity
+   checks. Monotonicity makes this deletion check inclusion-minimal.
+6. Bind the full IR digest, target formula digest, ordered candidate pool,
+   request digest, runtime, limits and discovered support. A checked artifact
+   can be attached to the usual sidecar and rechecked through the existing API.
+
+This finds **one inclusion-minimal** support. It is not all supports, the
+smallest support, a proof of extraction fidelity, or a derivation of every cited
+lemma. Any candidate premise, including a lemma, is an assumption for this
+particular check. The UI lets you inspect and narrow that pool.
+
+### Explicit defaults and logical specificity
+
+```js
+const result = await client.defeasible(review.ir, {
+  defaultClaimIds: ['birds_fly', 'penguins_do_not_fly'],
+  targetClaimId: 'tweety_flies', // optional, excluded from both strict/default inputs
+  policy: 'wmt.strict-specificity-greedy/1'
+});
+const receipt = await analyzeSubmissionDefaults(paper, {
+  defaultClaimIds: ['birds_fly', 'penguins_do_not_fly'],
+  targetClaimId: 'tweety_flies'
+}, client);
+```
+
+All unmarked, non-target formulas are **strict**. Defaults are entire formulas
+that may be omitted when inconsistent. The strict IR format still rejects
+`defeasible:true`; default roles live in this separate explicit request, so a
+saved strict bucket cannot silently change its logic.
+
+```mermaid
+flowchart TD
+  A[Explicit strict/default roles and optional target] --> B{Strict formulas SAT?}
+  B -->|No| X[Strict inconsistency: no selection]
+  B -->|Yes| C[Compare possible compatible antecedents under strict background]
+  C --> D[Proper inclusion gives more-specific-before-general edges]
+  D --> E[Topological order: weight then lexical ID break ready-node ties]
+  E --> F{Next whole default consistent with retained formulas?}
+  F -->|Yes| G[Retain default]
+  F -->|No| H[Override default and shrink its blocking conflict]
+  G --> I[Continue in the fixed order]
+  H --> I
+  I --> J[One preferred consistent subtheory and conditional target result]
+```
+
+The exact policy is:
+
+- Start by checking the strict background is consistent. Strict inconsistency
+  returns `strict_inconsistent`; defaults cannot repair it.
+- A specificity candidate is a ground implication or an implication under one
+  or more outer universal binders. Compare antecedents only when the ordered
+  binder-sort signatures match; alpha-rename binders with fresh variables.
+  Arbitrary typed antecedent formulas, including conjunctions, are allowed.
+- Require each antecedent is possible under the strict background (test
+  satisfiability of its existential closure). Impossible antecedents do not
+  gain priority through vacuous inclusion. Other formula shapes stay available
+  as defaults but receive `priority_only` eligibility.
+- `A` is more specific than `B` exactly when the strict background entails
+  `forall vars. A => B` and does **not** entail its reverse. Equivalent
+  antecedents and different binder sorts produce no edge. This is an explicit
+  logical-inclusion approximation to specificity, not every Poole criterion.
+- Topologically order the strict-inclusion graph. Among ready nodes, prefer
+  higher entrenchment weight, then ascending ASCII claim ID. More-specific
+  edges therefore take precedence over general defaults' higher weights.
+- Greedily retain each entire default when consistent with the retained
+  formulas; otherwise override it. Shrink a rejected default plus the retained
+  background into an inclusion-minimal blocking conflict. These groups explain
+  **that rejection**, not a pairwise attack or unique cause.
+- If a target is supplied, check it and its negation against the selected
+  consistent subtheory. Report `supported_in_selected_subtheory`,
+  `refuted_in_selected_subtheory`, or `undetermined`. None is a `checked`
+  assumption-free proof receipt. The target never supports its own query.
+
+This is **one deterministic preferred consistent subtheory**, with a recorded
+linear priority policy. It does not enumerate all Brewka preferred subtheories,
+compute skeptical/credulous default entailment over all extensions, implement
+arbitrary Reiter default rules, inherit the legacy core's specificity ranking,
+or automatically ground a universal default separately for each individual.
+Consequently an exception can override an entire universal rule. Per-individual
+exceptions and richer defeasible consequence relations require a future profile.
+It also does not establish AGM postulates. The existing Rust compiler/Z3 runtime
+is reused; the more careful specificity ordering is a new JS adapter policy,
+not an assertion that the legacy Rust defaults algorithm was repaired.
+
+Normality remains an interpretation decision: choosing this defaults mode does
+not turn “normally” into an existential, majority, probability, mean or modal
+operator. Candidate-extraction feedback remains separate from formalization.
+
+### API, limits and storage boundaries
+
+`POST /v1/submissions/{submissionId}/reasoning/defaults` accepts
+`{ expectedRevision, request: { defaultClaimIds, targetClaimId?, policy? }, limits? }`
+and returns `{ revision, receipt }`. The separate `wmt.paper-reasoning/1` receipt
+binds document, proposal, IR and exact reasoning request; this route does not
+increment the submission revision or persist its result into the paper sidecar.
+Download/store that receipt separately. Witness artifacts use the existing
+`/proofs`, `/proofs/check` and `/sidecar` routes and are included in the sidecar.
+
+Both new worker operations use the same fresh-worker cancellation and wall
+budget as strict analysis, plus a shared per-operation solver-call count and
+per-query Z3 timeout. UNKNOWN, solver errors, invalid inputs, cancellation,
+timeout or exhausted budgets never produce a complete preferred set or a checked
+witness. Intermediate default choices are not returned as final results.
+The existing strict limit remains 64 claims; defaults and support search do not
+lift it. They also do not remove MARCO's runtime enumeration cap.
+
+Defaults receipts do **not** append to strict buckets or override their claims.
+A conditional result cannot ratify a paper or change an owner's accepted model.
+Old strict submissions, receipt shapes and Castalia projections continue to load;
+new optional conflict metadata, proof kind and separate defaults endpoint are
+additive. Review the new policy explicitly before using it for a paper.
+
+
+## Every named-entity default extension and verified bucket forks (.4)
+
+Open [`../reasoning.html?example=extensions`](../reasoning.html?example=extensions).
+The combined example has Tweety, Robin and Nixon. It produces **four** normal
+extensions and **two** preferred extensions. Tweety's specific penguin exception
+wins in both preferred positions while Robin still flies. Nixon's equal-priority
+Quaker/Republican defaults remain alternatives. A comparison table shows every
+grounded default's Applied / Blocked / Not triggered status in each position.
+Every position can be inspected and explicitly forked into a new bucket.
+
+### New semantics: finite named normal defaults
+
+`wmt.named-normal-extensions/1` is separate from the retained whole-rule greedy
+profile. For each default claim, remove its outer universal binders and
+instantiate them over the chosen declared zero-argument constants of matching
+sorts. An implication `A => B` becomes the **normal default** `A : B / B`.
+A non-implication becomes `True : formula / formula`. The implication is not
+asserted as a strict material rule: no contrapositive or antecedent assumption
+is obtained by choosing a default. Inner bound quantifiers stay bound.
+
+For example, `forall x. Bird(x) => Fly(x)` generates separate defaults
+`Bird(robin) : Fly(robin) / Fly(robin)` and
+`Bird(tweety) : Fly(tweety) / Fly(tweety)`. Blocking the latter does not block
+Robin's instance. The exact original rule, substitutions and ground primitive
+formulas are recorded in `grounding.instances`. Empty or missing domains for an
+outer quantified variable stop with `missing_ground_domain` rather than
+silently claiming completeness. Names are not implicitly distinct; equality or
+inequality constraints stay in the strict IR and are handled by Z3.
+
+This profile enumerates all coherent **normal-default** extensions of that
+finite grounding, using the deductive closure of the shared strict background.
+It does not claim to ground unnamed first-order individuals or enumerate an
+infinite domain. Explicit entity selections are not closed-domain axioms.
+Normal defaults have their justification equal to their conclusion; arbitrary
+separate justifications are not part of this profile. The fixed-point notion is
+Reiter's normal-default operator, as stated in Definition 3 of
+[Rychlik's primary paper on default semantics](https://cdn.aaai.org/AAAI/1991/AAAI91-058.pdf),
+with [Reiter's original paper](https://www.sciencedirect.com/science/article/pii/0004370280900144)
+providing the origin of default logic. The preference filter below is this SDK's
+explicit additional policy; it is not claimed to coincide with every prioritized
+or Brewka default semantics.
+
+```mermaid
+flowchart TD
+  A[Strict parent + reviewed incoming interpretation] --> B[Explicit named domains and source default roles]
+  B --> C[Typed ground normal-default instances]
+  C --> D[Enumerate grounded application sequences]
+  D --> E[Deduplicate equivalent consequent closures]
+  E --> F[Independently reconstruct Gamma from strict background]
+  F --> G[Verify each fixed point and full conjunction]
+  G --> H[All extensions + specificity/weight preferred subset]
+  H --> I[Inspect entity-by-position table and blocking conflicts]
+  I --> J[Explicitly choose a position]
+  J --> K[Fresh SAT check of the complete materialized bucket]
+  K --> L[Immutable fork + parent + source/grounding receipt]
+```
+
+### Enumerator and verifiability
+
+1. Validate the source IR, default IDs, target exclusion, typed named domains and
+   budgets. Existing parent-bucket assumptions are always strict. A source rule
+   already in the parent cannot be silently reclassified as a default.
+2. Check the strict background is SAT. On UNSAT, return `strict_inconsistent`
+   with no coherent positions; normal defaults do not repair strict assumptions.
+3. Starting from that background, find defaults whose prerequisites are
+   entailed and whose conclusions are consistent with the current theory.
+   Branch on each eligible conclusion and continue until no new consistent,
+   triggered conclusion can be added. There is no branch that simply assumes an
+   unsupported prerequisite. Therefore a cycle `P:P/P` has no self-generated P.
+4. Memoize theories by their entailed subset of the finite consequent basis.
+   Since every theory shares W and is generated by that basis, this signature
+   merges logically equivalent extensions rather than counting different rule
+   application orders. Strictly entailed prerequisites and conclusions are safe
+   shared checks. If all possible consequents are jointly consistent, batch
+   applicable rules to compute the unique monotonic closure.
+5. At every terminal candidate E, independently reconstruct `Gamma(E)` from W,
+   fixing justification consistency to E and iterating its triggered unblocked
+   normal defaults. Verify that Gamma and E entail the same consequent basis,
+   and that the result is SAT. This checks the fixed point rather than relying
+   solely on a search terminal or a maximal consistent subset. Circular
+   support and incomplete closure fail this check.
+6. Classify each instance: **Applied** when its prerequisite and conclusion
+   follow; **Blocked** when its prerequisite follows and its conclusion is
+   refuted; **Not triggered** when its prerequisite does not follow. A strict
+   reason can already entail a conclusion even when that particular default
+   did not trigger. Materialized positions include all entailed ground
+   consequences, not unsupported universal rules.
+7. Deletion-shrink each blocked conclusion together with the final position
+   into a minimal blocking conflict group. These are whole conflicts, not
+   binary attacks. Store a generating derivation and the typed ground basis.
+8. Once the search is exhausted, summarize consequence membership and the
+   target's supported/refuted/undetermined status across **all** extensions and
+   separately across preferred ones. Skeptical support requires support in
+   every position of the named set; credulous support requires at least one.
+
+The enumerator is exhaustive when `complete:true, stopReason:"completed"`.
+A solver UNKNOWN/error, cancellation, missing domain, or exhausted solver-call,
+state or wall budget returns no adoptable extensions. It does not label a
+partial prefix complete. The existing 64-formula SDK profile remains: strict
+formulas plus grounded default instances must fit it. The configured budgets
+still bound exponential branching. These limits are reported explicitly.
+
+An independent test oracle exhausts all candidate consequent subsets and
+computes their fixed points separately. It agrees with the search for support
+chains, self-support cycles, delayed conflicts, and a three-way conflict where
+all pairs are consistent. Native Node and real Chrome run the same adapter and
+unchanged Rust compiler / Z3 4.16 solver assets.
+
+### Preference among extensions
+
+Keep **all** normal extensions visible, including lower-priority alternatives.
+Compute proper strict-background logical specificity between compatible source
+antecedents as before. Form successive specificity layers: more specific sources
+come first. Within a layer, higher weights precede lower weights. Each resulting
+stratum contains all grounded instances of its tied source rules.
+
+Extension E dominates F only when all earlier strata have identical applied
+instance sets, and at the first differing stratum E's applied set is a **proper
+superset** of F's. Incomparable tied sets remain preferred alternatives. IDs
+stabilize display order; they never break an actual semantic tie. This is set
+inclusion preference, not majority voting or maximum cardinality. The exact
+strata and preferred extension IDs are part of the receipt. This policy is
+explicitly versioned rather than asserting equivalence with every Poole,
+Brewka, Reiter-priority or AGM formalism.
+
+### SDK and bucket APIs
+
+```js
+const all = await client.extensions(review.ir, {
+  defaultClaimIds: ['birds', 'penguins', 'quakers', 'republicans'],
+  targetClaimId: 'target',
+  entities: [
+    { name: 'tweety', sort: 'Entity' },
+    { name: 'robin', sort: 'Entity' },
+    { name: 'nixon', sort: 'Entity' }
+  ]
+});
+// all.extensions: every verified extension; .preferred is a separate filter.
+
+const receipt = await buckets.enumerateDefaults(parent.id, {
+  expectedVersion: parent.version, expectedDigest: parent.digest,
+  actorId: parent.owner,
+  submission: paper, // requires reviewed, exact PDF/formula bindings
+  // Alternatively: candidateIR: explicitTypedIR, with no claimed PDF binding.
+  request: { defaultClaimIds: ['birds', 'penguins'], targetClaimId: 'query' }
+});
+const chosen = receipt.result.extensions.find(e => e.preferred);
+const fork = await buckets.forkExtension(parent.id, {
+  receiptId: receipt.id, extensionId: chosen.id,
+  newId: 'model:alternative', name: 'One coherent position',
+  actorId: parent.owner,
+  expectedVersion: parent.version, expectedDigest: parent.digest
+});
+```
+
+A bucket's acceptance remains the satisfiability of its **whole conjunction**.
+A pairwise-only check would miss the P, Q, ¬(P ∧ Q) conflict. The new
+`client.consistency` performs that direct check in one solver call. Strict
+admission does not wait for default-extension or repair enumeration. Coherent
+subsets do not make an inconsistent full bucket acceptable.
+
+`forkExtension` only accepts a fresh live receipt from this repository, bound
+to the exact parent ID/version/digest. It rechecks the selected materialized
+IR's digest, preserves every parent assumption, performs a fresh SAT check, and
+compares the parent and fork ID again after solving. A stale parent, forged
+extension ID, unknown result, cancellation or concurrent change prevents commit.
+The original bucket is unchanged. A lower-priority enumerated extension can be
+adopted explicitly as an alternative hypothesis; its priority status is retained.
+
+The new fork freezes the chosen ground conclusions as **explicit strict
+assumptions** for subsequent bucket checks. Its provenance retains source rules,
+entity substitutions, preference policy and extension receipt. Changing facts
+requires a fresh enumeration and an explicit new trajectory; this release does
+not silently recompute or retract already accepted bucket assumptions.
+
+HTTP endpoints:
+
+- `POST /v1/buckets/{bucketId}/default-extensions`: exact parent version/digest,
+  actor, request, limits, and either a reviewed `submissionId` +
+  `submissionRevision` or an explicit `candidateIR`.
+- `POST /v1/buckets/{bucketId}/extension-forks`: receipt, extension, new bucket
+  identity and exact parent reference.
+- Existing `/submissions` bucket checks also accept `enumeratePositions:false`
+  to skip repair diagnostics. Known UNSAT still rejects; UNKNOWN never appends.
+
+`BucketRepository.export()` includes additive `extensionReceipts`. Restore
+validates their digests and preserves them as historical evidence, never fresh
+fork authority. Re-enumerate after restoration to authorize a new fork.
+Paper sidecars include only extension receipts whose source binding names that
+paper, plus its related forks and ancestors. Direct IR examples do not acquire
+fake PDF provenance. The standalone example, the synthetic definition example and
+the generic workbench offer workspace/receipt exports; example bucket views
+also show the newly created default-extension trajectories.
+
+The .3 greedy profile and stored strict records continue to load. New APIs,
+workspace/sidecar receipt fields and bucket consistency evidence are additive.
+The intended admission change is that a completed direct SAT/UNSAT check stays
+authoritative even when optional enumeration is skipped or incomplete.

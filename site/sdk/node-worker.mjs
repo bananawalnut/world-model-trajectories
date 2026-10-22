@@ -19,7 +19,11 @@ parentPort.once('message',async({action,payload,limits})=>{
       requireThat(await sha256(await readFile(new URL('./build/z3-built.wasm',import.meta.resolve('z3-solver/package.json'))))===runtime.solverWasmSha256,'Solver binary checksum mismatch.','binding_mismatch');
       const z3=await initZ3();
       const runner=createAnalysisRunner({createEngine:()=>new WmtEngine(),evaluate:lowLevelEvaluator(z3.Z3),runtime});
-      if(action==='analyze')value=await runner.analyze(payload.ir,limits);
+      if(action==='consistency')value=await runner.consistency(payload.ir,limits);
+      else if(action==='extensions')value=await runner.extensions(payload.ir,payload.request,limits);
+      else if(action==='analyze')value=await runner.analyze(payload.ir,limits);
+      else if(action==='witness')value=await runner.witness(payload.ir,payload.evidence,limits);
+      else if(action==='defeasible')value=await runner.defeasible(payload.ir,payload.request,limits);
       else if(action==='entailment')value=await runner.entailment(payload.ir,payload.proof,limits);
       else throw new Error('Unknown worker operation.');
     }

@@ -1,6 +1,6 @@
 {
   "name": "@wmt/paper-sdk",
-  "version": "0.1.0-experimental.1",
+  "version": "0.1.0-experimental.5",
   "description": "Versioned WMT buckets, PDF claim proposals and computational evidence for publication sidecars",
   "type": "module",
   "license": "MIT OR Apache-2.0",

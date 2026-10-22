@@ -9,3 +9,7 @@ export * from './analysis.mjs';
 export * from './client.mjs';
 export * from './castalia.mjs';
 export * from './formalizer.mjs';
+export * from './proof-candidates.mjs';
+export {DEFEASIBLE_POLICY,collectiveConflicts} from './reasoning.mjs';
+export {EXTENSIONS_POLICY,normalizeExtensionsRequest,prepareGroundDefaults} from './default-extensions.mjs';
+export * from './definition-review.mjs';

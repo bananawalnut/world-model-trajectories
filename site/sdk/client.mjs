@@ -27,7 +27,9 @@ export function createWorkerClient(spawn) {
       worker.postMessage({action,payload,limits:budgets});
     });
   }
-  return {request,analyze:(ir,options)=>request('analyze',{ir},options),
+  return {request,consistency:(ir,options)=>request('consistency',{ir},options),extensions:(ir,requestInput,options)=>request('extensions',{ir,request:requestInput},options),analyze:(ir,options)=>request('analyze',{ir},options),
+    witness:(ir,evidence,options)=>request('witness',{ir,evidence},options),
+    defeasible:(ir,requestInput,options)=>request('defeasible',{ir,request:requestInput},options),
     extract:(bytes,fileName,options)=>request('extract',{bytes:new Uint8Array(bytes),fileName},options),
     entailment:(ir,proof,options)=>request('entailment',{ir,proof},options)};
 }

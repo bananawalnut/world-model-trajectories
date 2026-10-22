@@ -1,9 +1,13 @@
+import {buildCandidateReview} from '../sdk/proof-candidates.mjs';
+import {mountCandidateReview,restoreCandidateFeedback} from './candidate-review.mjs';
+import {renderMathText} from './math-text.mjs';
 import {createWorkerClient,createSubmission,formalizeSubmission,reviewSubmission,controlledParser,mergeIR,
   makeEntailmentProof,verifySubmissionProofs,BucketRepository,exportSidecar,requireThat} from '../sdk/index.mjs';
 import * as pdfjs from '../vendor/pdfjs/pdf.mjs';
 import {mountCoherenceView,mountTrajectoryView} from './coherence-view.mjs';
 import {PASSAGES,STEPS,passageCandidates,formulaText,formulaNodes,sourceRanges} from './walkthrough-model.mjs';
 
+let candidateReview=null,candidateNotice='';const candidateView={order:'review',filter:'all',search:'',page:0};
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const client=createWorkerClient(()=>new Worker(new URL('./worker.js',import.meta.url)));
 let step=0,unlocked=0,busy=false,controller,pdf,bytes,paper=null,rendered=[],sourceKey='A1',formalKey='A1',nodeIndex=0,pageNumber=1,zoom=1;
@@ -24,7 +28,7 @@ async function task(label,fn) {
 }
 async function showSource(key) {
   sourceKey=key;const p=passage(key);pageNumber=p.page;
-  $('pdf-selection').innerHTML=`<b>${esc(p.key)} · ${esc(p.role)}</b><div>“${esc(p.quote)}”</div><span>${p.candidate?`PDF page ${p.page} · text ${p.candidate.locator.start}–${p.candidate.locator.end} · ${esc(p.candidate.id)}`:'Author-annotated example passage; extraction has not run yet.'}</span>`;
+  $('pdf-selection').innerHTML=`<b>${esc(p.key)} · ${esc(p.role)}</b><div>“${renderMathText(p.quote)}”</div><span>${p.candidate?`PDF page ${p.page} · text ${p.candidate.locator.start}–${p.candidate.locator.end} · ${esc(p.candidate.id)}`:'Author-annotated example passage; extraction has not run yet.'}</span>`;
   await drawPage();
 }
 function updatePdfControls() {
@@ -59,7 +63,7 @@ async function drawPage() {
 }
 function header(title,lede){return `<p class="kick">${step+1} / ${STEPS.length} · ${STEPS[step][0]}</p><h2 id="stage-title" tabindex="-1">${title}</h2><p>${lede}</p>`;}
 function sourceCard(p,{status='',review=false}={}) {
-  return `<article class="walk-card ${sourceKey===p.key?'selected':''}" data-passage="${esc(p.key)}"><span class="role">${esc(p.key)} · ${esc(p.role)}</span><blockquote>${esc(p.quote)}</blockquote><p class="small">${esc(p.note)}</p>${p.candidate?`<div class="walk-metadata">Page ${p.page} · text ${p.candidate.locator.start}–${p.candidate.locator.end} · SDK kind: ${esc(p.candidate.kind)}</div>`:''}${status?`<p class="small">${esc(status)}</p>`:''}<button class="source-jump" data-source="${esc(p.key)}">Show this passage in the PDF</button>${review?`<label class="walk-check"><input type="checkbox" data-confirm="${esc(p.key)}" ${paper.review?'checked disabled':''}>I confirm that this formula captures this source statement.</label><div class="formula-line">${esc(formulaText(formalClaim(p.key).formula))}</div>`:''}</article>`;
+  return `<article class="walk-card ${sourceKey===p.key?'selected':''}" data-passage="${esc(p.key)}"><span class="role">${esc(p.key)} · ${esc(p.role)}</span><blockquote>${renderMathText(p.quote)}</blockquote><p class="small">${esc(p.note)}</p>${p.candidate?`<div class="walk-metadata">Page ${p.page} · text ${p.candidate.locator.start}–${p.candidate.locator.end} · SDK kind: ${esc(p.candidate.kind)}</div>`:''}${status?`<p class="small">${esc(status)}</p>`:''}<button class="source-jump" data-source="${esc(p.key)}">Show this passage in the PDF</button>${review?`<label class="walk-check"><input type="checkbox" data-confirm="${esc(p.key)}" ${paper.review?'checked disabled':''}>I confirm that this formula captures this source statement.</label><div class="formula-line">${esc(formulaText(formalClaim(p.key).formula))}</div>`:''}</article>`;
 }
 function renderInspect() {
   return header('Start with the actual paper.','Use the page arrows or select a passage. The highlighted text stays in its printed context.')+
@@ -73,7 +77,7 @@ function renderExtract() {
   if(!paper)return body+'<p class="small muted">Author labels will be shown separately from the SDK’s heuristic claim kinds.</p>';
   const known=new Set(candidates().map(p=>p.candidate.id)),other=paper.extraction.claims.filter(c=>!known.has(c.id));
   return body+`<div class="walk-note"><b>${paper.document.pageCount} pages · ${paper.extraction.claims.length} candidates · candidate_partial</b><p class="small">Seven annotated passages guide this demo; ${other.length} additional text candidates are retained as context. Candidate extraction is not a complete paper understanding.</p><code class="walk-metadata">PDF SHA-256 ${esc(paper.document.sha256)}</code></div>`+
-    candidates().map(p=>sourceCard(p)).join('')+`<details><summary>Other extracted candidates (${other.length})</summary>${other.map(c=>`<div class="walk-card"><blockquote>${esc(c.statement)}</blockquote><p class="walk-metadata">p. ${c.locator.page} · ${c.locator.start}–${c.locator.end} · ${esc(c.kind)}</p></div>`).join('')}</details>`;
+    `<details open><summary>Review roles, scope and ambiguity interpretations</summary><div id="walk-candidate-review"></div></details>`+candidates().map(p=>sourceCard(p)).join('')+`<details><summary>Other extracted candidates (${other.length})</summary>${other.map(c=>`<div class="walk-card"><blockquote>${renderMathText(c.statement)}</blockquote><p class="walk-metadata">p. ${c.locator.page} · ${c.locator.start}–${c.locator.end} · ${esc(c.kind)}</p></div>`).join('')}</details>`;
 }
 function renderFormalize() {
   let body=header('See the primitives, then the composition.','The controlled parser builds typed WMT formulas. Symbols and logical operators carry the meaning; the JSON is their inspectable representation.')+
@@ -124,9 +128,10 @@ function render() {
   $('walk-gate').textContent=stageDone()&&step<6?'Explore this step, or continue.':gateNotes[step];
   document.querySelectorAll('[data-step]').forEach(b=>{if(b.tagName==='BUTTON')b.onclick=()=>navigate(Number(b.dataset.step));});
   document.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{showSource(b.dataset.source).then(()=>{if(innerWidth<=1000)document.querySelector('.paper-reader').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});});document.querySelectorAll('[data-passage]').forEach(card=>card.classList.toggle('selected',card.dataset.passage===sourceKey));});
+  if(step===1&&paper&&candidateReview)mountCandidateReview($('walk-candidate-review'),{document:paper.document,extraction:paper.extraction,review:candidateReview,view:candidateView,notice:candidateNotice,onChange:r=>{candidateReview=r;},onLocate:c=>{const p=candidates().find(p=>p.candidate.id===c.id);if(p)showSource(p.key);else {pageNumber=c.locator.page;drawPage();}}});
   $('walk-extract')?.addEventListener('click',()=>task('Extracting text and exact source-located candidates…',async signal=>{
     const next=await createSubmission({bytes:bytes.slice(),fileName:'walkthrough.pdf',title:'A small theory of Tweety',authors:['WMT synthetic teaching paper']},client,{signal});
-    requireThat(passageCandidates(next).every(p=>p.candidate),'The PDF text did not match every annotated passage. No demo claims were fabricated.');paper=next;await showSource(sourceKey);
+    requireThat(passageCandidates(next).every(p=>p.candidate),'The PDF text did not match every annotated passage. No demo claims were fabricated.');paper=next;const review=await buildCandidateReview(paper.document,paper.extraction),restored=await restoreCandidateFeedback(review,paper.document,paper.extraction);candidateReview=restored.review;candidateNotice=restored.notice;await showSource(sourceKey);
   }));
   $('walk-formalize')?.addEventListener('click',()=>task('Parsing the supported candidates into typed WMT claims…',async signal=>{
     const next=await formalizeSubmission(paper);requireThat(next.proposal.ir.claims.length===5,'Expected exactly five supported source statements.');

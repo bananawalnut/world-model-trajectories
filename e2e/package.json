@@ -10,7 +10,9 @@
     "test:papers": "node papers.mjs",
     "test:coherence-view": "node --test coherence-view.test.mjs",
     "test:walkthrough": "node walkthrough.mjs",
-    "test:walkthrough-model": "node --test walkthrough-model.test.mjs"
+    "test:walkthrough-model": "node --test walkthrough-model.test.mjs",
+    "test:definitions": "node definitions.mjs",
+    "test:reasoning": "node reasoning.mjs"
   },
   "dependencies": {
     "playwright": "1.64.1"

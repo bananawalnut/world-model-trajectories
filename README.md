@@ -29,6 +29,21 @@ discarding positions. Unknown and incomplete checks show no exhaustive
 acceptance or repair. These are views of checked claim sets, not truth
 assignments to a model.
 
+## Reusable paper review checkpoint
+
+The experimental paper SDK is now `0.1.0-experimental.5`. Open
+[`site/definitions.html`](site/definitions.html) for a public, generated-PDF
+example of one definition binding, source uses, retained ambiguous candidates,
+editable typed IR, explicit formalization review and checked bucket admission.
+[`site/reasoning.html`](site/reasoning.html) demonstrates collective conflicts,
+minimal explanation witnesses, entity-specific exceptions and all finite normal
+default extensions, including tied preferred alternatives and verified forks.
+
+Private paper sources, assessments and fixtures are not included. Public tests
+generate their own synthetic PDF and require no private files. The existing
+Rust/Wasm core, executable-kernel artifacts and Z3 assets remain unchanged.
+See [CHECKPOINT.md](CHECKPOINT.md) for scope, compatibility and verification.
+
 ## Guided PDF-to-buckets walkthrough
 
 Open **`site/walkthrough.html`** (or use the walkthrough button in the paper

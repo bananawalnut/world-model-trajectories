@@ -25,7 +25,11 @@ self.onmessage=async({data:{action,payload,limits}})=>{
         fetch('../sdk/runtime/manifest.json',{credentials:'omit'}).then(r=>{if(!r.ok)throw new Error('SDK runtime manifest unavailable.');return r.json();})]);
       await init();const z=await(z3Module.init||z3Module.default?.init)();
       const runner=createAnalysisRunner({createEngine:()=>new WmtEngine(),evaluate:lowLevelEvaluator(z.Z3),runtime});
-      if(action==='analyze')value=await runner.analyze(payload.ir,limits);
+      if(action==='consistency')value=await runner.consistency(payload.ir,limits);
+      else if(action==='extensions')value=await runner.extensions(payload.ir,payload.request,limits);
+      else if(action==='analyze')value=await runner.analyze(payload.ir,limits);
+      else if(action==='witness')value=await runner.witness(payload.ir,payload.evidence,limits);
+      else if(action==='defeasible')value=await runner.defeasible(payload.ir,payload.request,limits);
       else if(action==='entailment')value=await runner.entailment(payload.ir,payload.proof,limits);
       else throw new Error('Unknown SDK worker operation.');
     }

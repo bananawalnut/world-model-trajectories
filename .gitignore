@@ -11,3 +11,14 @@
 .DS_Store
 # NOTE: site/pkg/ (built wasm) and site/vendor/ (Z3) ARE committed on
 # purpose — the static demo must work on GitHub Pages with no build step.
+
+# Private paper assessments stay in the external preview workspace.
+/site/papers/morality/
+/site/papers/tokens/
+/site/on-morality.html
+/site/off-chain-tokens.html
+/site/parser-report/
+/site/parser-report.html
+/private/
+/.local/
+/e2e/artifacts/

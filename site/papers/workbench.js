@@ -1,3 +1,8 @@
+import {mountReasoningPanel} from './reasoning-panel.mjs';
+const reasoningState={};
+import {selectProofSpans,PROOF_CANDIDATE_POLICY,buildCandidateReview,effectiveCandidateRole} from '../sdk/proof-candidates.mjs';
+import {mountCandidateReview,restoreCandidateFeedback} from './candidate-review.mjs';
+import {renderMathText} from './math-text.mjs';
 import {createWorkerClient,BucketRepository,createSubmission,formalizeSubmission,reviewSubmission,restoreSubmission,
   controlledParser,DEMO_VOCABULARY,EMPTY_IR,mergeIR,formalizerPrompt,makeEntailmentProof,validateProof,verifySubmissionProofs,
   compareBuckets,exportSidecar,requireThat,clone} from '../sdk/index.mjs';
@@ -5,10 +10,11 @@ import {mountCoherenceView,mountTrajectoryView} from './coherence-view.mjs';
 
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const client=createWorkerClient(()=>new Worker(new URL('./worker.js',import.meta.url)));
+let candidateReview=null,candidateNotice='',candidateView={order:'review',filter:'all',search:'',page:0};
 let repository=new BucketRepository(client),paper=null,rendered=[],receipt=null,busy=false,controller;
 function activeBucket(){return $('bucket-select').value?repository.get($('bucket-select').value):null;}
 function updateControls() {
-  $('formalize-paper').disabled=busy||!paper;
+  $('formalize-paper').disabled=busy||!paper;$('extract-structured').disabled=busy||!paper;
   $('apply-authored-proposal').disabled=busy||!paper;
   $('build-paper-prompt').disabled=busy||!paper;
   $('confirm-paper-review').disabled=busy||!paper?.proposal?.ir.claims.length||rendered.length!==paper.proposal.ir.claims.length;
@@ -60,17 +66,17 @@ function renderComparison() {
   $('bucket-comparison').innerHTML=`<div class="bucket-snapshot"><b>${escape(b.name)} v${b.version} ↔ ${escape(other.name)} v${other.version}</b><p class="small">Only in the active bucket: ${d.onlyLeft.map(id=>escape(sources.get(id))).join(' · ')||'none'}</p><p class="small">Only in the comparison: ${d.onlyRight.map(id=>escape(sources.get(id))).join(' · ')||'none'}</p><p class="small">Changed claim IDs: ${d.changed.map(escape).join(', ')||'none'}</p></div>`;
 }
 function renderPaper() {
-  if(!paper){$('paper-source-summary').replaceChildren();$('paper-claims').innerHTML='<p class="muted">Load a PDF to extract candidate claims.</p>';$('paper-review-status').textContent='';updateControls();return;}
+  if(!paper){candidateReview=null;$('structured-review').replaceChildren();$('paper-source-summary').replaceChildren();$('paper-claims').innerHTML='<p class="muted">Load a PDF to extract candidate claims.</p>';$('paper-review-status').textContent='';updateControls();return;}
   const doc=paper.document,reviewed=new Set(paper.review?.sourceClaimIds??[]),mappings=new Map(paper.proposal?.mappings.map(m=>[m.sourceClaimId,m.formalClaimIds])??[]);
   const renders=new Map(rendered.map(c=>[c.id,c.render])),reasons=new Map(paper.proposal?.unsupported.map(u=>[u.sourceClaimId,u.reason])??[]);
   $('paper-source-summary').innerHTML=`<div class="bucket-snapshot"><b>${escape(paper.title)}</b><p class="small">${doc.pageCount} page${doc.pageCount===1?'':'s'} · ${paper.extraction.claims.length} candidate claims · <b>candidate_partial</b></p><code>PDF SHA-256 ${escape(doc.sha256)}</code>${doc.extraction.imageOnlyPages.length?`<p class="small unsupported">OCR required for pages ${doc.extraction.imageOnlyPages.join(', ')}.</p>`:''}</div>`;
   $('paper-claims').innerHTML=paper.extraction.claims.map(c=>{
     const ids=mappings.get(c.id),mapped=!!ids?.length;
-    return `<article class="source-claim" data-source-id="${c.id}"><label class="review-line"><input type="checkbox" data-review-source="${c.id}" ${mapped?'':'disabled'} ${reviewed.has(c.id)?'checked':''}><span>Confirm this source → formalization mapping</span></label><blockquote>${escape(c.statement)}</blockquote><div class="locator">Page ${c.locator.page} · text ${c.locator.start}–${c.locator.end} · ${escape(c.kind)} · source-stated candidate</div>${mapped?ids.map(id=>`<div class="formal-render"><b>WMT reads:</b> ${escape(renders.get(id)??'Awaiting typed rendering…')}</div>`).join(''):`<p class="small unsupported">${escape(reasons.get(c.id)??'Not formalized yet.')}</p>`}<code>${c.id}</code></article>`;
+    return `<article class="source-claim" data-source-id="${c.id}"><label class="review-line"><input type="checkbox" data-review-source="${c.id}" ${mapped?'':'disabled'} ${reviewed.has(c.id)?'checked':''}><span>Confirm this source → formalization mapping</span></label><blockquote>${renderMathText(c.statement)}</blockquote><div class="locator">Page ${c.locator.page} · text ${c.locator.start}–${c.locator.end} · ${escape(candidateReview?effectiveCandidateRole(candidateReview.entries.find(e=>e.candidateId===c.id)):c.kind)} · source-stated candidate</div>${mapped?ids.map(id=>`<div class="formal-render"><b>WMT reads:</b> ${escape(renders.get(id)??'Awaiting typed rendering…')}</div>`).join(''):`<p class="small unsupported">${escape(reasons.get(c.id)??'Not formalized yet.')}</p>`}<code>${c.id}</code></article>`;
   }).join('')||'<p class="muted">No text-layer claim candidates found. Supply OCR or a source-aware extraction adapter before formalizing.</p>';
   document.querySelectorAll('[data-review-source]').forEach(box=>box.onchange=()=>{paper.review=null;paper.proofReceipts=[];clearResult();renderReview();renderProofs();updateControls();});
   $('prompt-candidate').innerHTML=paper.extraction.claims.map(c=>`<option value="${c.id}">${escape(c.statement.slice(0,100))}</option>`).join('');
-  renderReview();renderProofControls();renderProofs();updateControls();
+  renderReview();renderProofControls();renderProofs();updateControls();if(candidateReview)mountCandidateReview($('structured-review'),{document:paper.document,extraction:paper.extraction,review:candidateReview,view:candidateView,notice:candidateNotice,onChange:r=>{candidateReview=r;},onLocate:c=>{const card=document.querySelector(`[data-source-id="${c.id}"]`);card?.scrollIntoView({block:'start'});}});
 }
 function renderReview() {
   $('paper-review-status').textContent=paper?.review?`${paper.review.sourceClaimIds.length} source mappings confirmed by ${paper.review.actorId}; ${paper.review.ir.claims.length} formal claims selected. Extraction remains partial.`:'No confirmed formalization subset. Select mappings after reading their WMT renders.';
@@ -82,17 +88,18 @@ function renderProofControls() {
   $('proof-premises').innerHTML=claims.map((c,i)=>`<option value="${c.id}" ${i<claims.length-1?'selected':''}>${escape(c.source)}</option>`).join('');
 }
 function renderProofs() {
+  mountReasoningPanel($('paper-reasoning'),{client,submission:paper,state:reasoningState,repository,onWorkspace:(workspace,id)=>{renderBuckets(id);},onAttach:(artifact,receipt)=>{if(!paper.proofs.some(p=>p.id===artifact.id)){paper.proofs.push(artifact);paper.proofReceipts.push(receipt);renderProofs();updateControls();}}});
   const proofs=paper?.proofs??[],results=new Map(paper?.proofReceipts.map(r=>[r.proofId,r])??[]);
   $('paper-proofs').innerHTML=proofs.map(p=>{const r=results.get(p.id);return `<div class="evidence-card ${r?.result.status==='checked'?'checked':''}" data-proof-id="${escape(p.id)}"><b>${escape(p.id)}</b> · ${escape(p.kind)}<p class="small"><b>${escape(r?.result.status??'attached, not checked')}</b> · ${escape(r?.result.reason??'No checker has run for this artifact.')}</p>${r?.checker?`<code>${escape(r.checker.id)} · ${escape(r.checker.revision??'no completed revision')}</code>`:''}</div>`;}).join('')||'<p class="muted">No computational evidence attached.</p>';
 }
 async function setPaper(next,signal) {
-  paper=next;rendered=[];clearResult();
+  paper=next;rendered=[];clearResult();const freshReview=await buildCandidateReview(paper.document,paper.extraction),restored=await restoreCandidateFeedback(freshReview,paper.document,paper.extraction);candidateReview=restored.review;candidateNotice=restored.notice;
   $('paper-title').value=paper.title;$('paper-authors').value=paper.authors.join(', ');
   if(paper.proposal){const meta=await client.request('render',{ir:paper.proposal.ir},{signal});requireThat(Array.isArray(meta.claims),meta.message??'Could not render the typed formalization.');rendered=meta.claims;}
   renderPaper();
 }
 function renderReceipt() {
-  const r=receipt,a=r.analysis,status=a.complete?a.status:'unknown';
+  const r=receipt,a=r.analysis,status=r.consistency?.complete?r.consistency.status:a.complete?a.status:'unknown';
   $('bucket-verdict').dataset.status=status;$('bucket-verdict').className='statusbar '+(status==='consistent'?'ok':status==='inconsistent'?'warn':'muted');
   $('bucket-verdict').textContent=r.outcome==='inserted'?`Coherent — appended ${r.addedClaimIds.length} claims. Bucket ${r.after.id} is now version ${r.after.version}.`:r.outcome==='conflict'?`Conflict — bucket ${r.before.id} is unchanged at version ${r.before.version}.` : r.outcome==='unchanged'?'Coherent — these claims are already present. Bucket unchanged.':`No append — ${a.stopReason}: ${a.message??'No complete verdict.'}`;
   $('bucket-receipt').textContent=JSON.stringify(r,null,2);
@@ -144,6 +151,7 @@ $('extract-paper').onclick=()=>task('Extracting PDF text and source-located cand
     authors:$('paper-authors').value.split(',').map(s=>s.trim()).filter(Boolean)},client,{signal}),signal);
 });
 for(const id of ['pdf-file','paper-title','paper-authors'])$(id).addEventListener('input',()=>{paper=null;rendered=[];clearResult();renderPaper();renderProofs();});
+$('extract-structured').onclick=()=>task('Selecting structured proof candidates from this exact PDF…',async signal=>{requireThat(paper,'Load a PDF first.');const bytes=Uint8Array.from(atob(paper.source.base64),c=>c.charCodeAt(0));await setPaper(await createSubmission({bytes,fileName:paper.source.fileName,title:paper.title,authors:paper.authors,rfcRef:paper.rfcRef,publicationRef:paper.publicationRef},client,{signal,claimExtractor:{id:PROOF_CANDIDATE_POLICY,select:selectProofSpans}}),signal);});
 $('formalize-paper').onclick=()=>task('Parsing supported candidates and rendering their WMT formulas…',async signal=>{
   requireThat(paper,'Load a PDF first.');await setPaper(await formalizeSubmission(paper,{parse:controlledParser(JSON.parse($('paper-vocabulary').value))}),signal);
 });
@@ -172,7 +180,7 @@ $('submit-to-bucket').onclick=()=>task('Checking the full combined claim set and
   const result=await repository.submit(bucket.id,{expectedVersion:bucket.version,expectedDigest:bucket.digest,actorId:$('actor-id').value,
     submission:paper,idempotencyKey:crypto.randomUUID(),signal});receipt=result.receipt;renderBuckets(bucket.id);renderReceipt();
 });
-$('download-paper-sidecar').onclick=()=>{if(paper)download(exportSidecar(paper,{bucketReceipts:repository.export().receipts,buckets:repository.export().versions}),'wmt-paper-sidecar.json');};
+$('download-paper-sidecar').onclick=()=>{if(paper)download(exportSidecar(paper,{bucketReceipts:repository.export().receipts,buckets:repository.export().versions,extensionReceipts:repository.export().extensionReceipts}),'wmt-paper-sidecar.json');};
 $('download-workspace').onclick=()=>download({format:'wmt.paper-workspace/1',bucketWorkspace:repository.export(),submission:paper},'wmt-paper-workspace.json');
 $('workspace-file').onchange=()=>task('Restoring and rechecking bucket heads and PDF sources…',async signal=>{
   const file=$('workspace-file').files[0];requireThat(file && file.size<=34000000,'Choose a workspace JSON below 34 MB.');

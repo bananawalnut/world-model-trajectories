@@ -18,7 +18,7 @@ export function toCastaliaClaimSet(submission,{id,revision,publicationRevision,c
 }
 export function toCastaliaAnalysis(receipt,{id,targetId,snapshotId}) {
   requireThat(/^PAS-\d{4,}$/.test(id) && /^FMT-\d{4,}$/.test(targetId) && /^PMS-[A-Z0-9-]+$/.test(snapshotId),'Supply valid Castalia analysis, target and snapshot IDs.');
-  const a=receipt.analysis,complete=a.complete && a.stopReason==='completed';
+  const a=receipt.consistency?.complete?receipt.consistency:receipt.analysis,complete=a.complete && a.stopReason==='completed';
   const status=complete?(a.status==='consistent'?'exhausted':'counterexample_found'):['error','solver_error','invalid_input'].includes(a.stopReason)?'error':'unsupported';
   return {schemaVersion:'castalia.paper-analysis-semantic.v1',id,targetId,snapshotId,
     engine:'wmt-core + z3-solver',engineRevision:a.runtime?.engineRevision??'no-completed-engine-result',
@@ -26,12 +26,13 @@ export function toCastaliaAnalysis(receipt,{id,targetId,snapshotId}) {
     stopReason:`${a.stopReason}: ${a.message??a.status}; bucket=${receipt.before.id}@${receipt.before.version}; input=${receipt.inputDigest}`,
     conclusionBoundary:receipt.boundary,createdAt:receipt.createdAt};
 }
-export function exportSidecar(submission,{bucketReceipts=[],buckets=[]}={}) {
-  const related=bucketReceipts.filter(r=>r.submissionId===submission.id),receiptIds=new Set(related.map(r=>r.id));
-  const wanted=new Set(related.flatMap(r=>[r.before.digest,r.after.digest]));
+export function exportSidecar(submission,{bucketReceipts=[],buckets=[],extensionReceipts=[]}={}) {
+  const extensions=extensionReceipts.filter(r=>r.sourceBinding?.submissionId===submission.id);
+  const related=bucketReceipts.filter(r=>r.submissionId===submission.id),receiptIds=new Set([...related,...extensions].map(r=>r.id));
+  const wanted=new Set([...related.flatMap(r=>[r.before.digest,r.after.digest]),...extensions.map(r=>r.before.digest)]);
   for(const bucket of buckets)if(receiptIds.has(bucket.provenance?.receiptId))wanted.add(bucket.digest);
   let changed=true;
   while(changed){changed=false;for(const bucket of buckets)if(wanted.has(bucket.digest) && bucket.parent && !wanted.has(bucket.parent.digest)){wanted.add(bucket.parent.digest);changed=true;}}
-  return {format:'wmt.paper-sidecar/1',delivery:'local_not_published',submission,bucketReceipts:related,buckets:buckets.filter(b=>wanted.has(b.digest)),
+  return {format:'wmt.paper-sidecar/1',delivery:'local_not_published',submission,bucketReceipts:related,extensionReceipts:extensions,buckets:buckets.filter(b=>wanted.has(b.digest)),
     boundary:'SDK interchange for a Castalia RFC/journal host. Not repository acceptance, a signed WMT release, a Lean receipt, or evidence that extraction is complete.'};
 }

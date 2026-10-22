@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import {readFile} from 'node:fs/promises';
 import {createNodeClient} from './node.mjs';
 import {BucketRepository,createSubmission,formalizeSubmission,reviewSubmission,verifySubmissionProofs,
-  controlledParser,validateProof,decodeBase64,exportSidecar,closed,requireThat,digest,clone} from './index.mjs';
+  analyzeSubmissionDefaults,controlledParser,validateProof,decodeBase64,exportSidecar,closed,requireThat,digest,clone} from './index.mjs';
 
 const errors={not_found:404,stale_version:409,revision_conflict:409,owner_mismatch:403,resource_limit:413,busy:503};
 function json(response,status,value) {
@@ -38,9 +38,9 @@ export function createSidecarServer({client=createNodeClient(),repository=new Bu
       if(request.headers.origin)requireThat(request.headers.origin===`http://${request.headers.host}`,'Cross-origin mutation is unavailable.','owner_mismatch');
       const url=new URL(request.url,'http://'+request.headers.host),segments=url.pathname.split('/').filter(Boolean).map(decodeURIComponent),method=request.method;
       if(method==='GET' && url.pathname==='/v1/capabilities')return json(response,200,{
-        format:'wmt.sidecar-capabilities/1',sdk:'0.1.0-experimental.1',releaseStatus:'experimental_unsigned',
+        format:'wmt.sidecar-capabilities/1',sdk:'0.1.0-experimental.5',releaseStatus:'experimental_unsigned',
         extraction:claimExtractor?.id??'PDF.js text layer; candidate_partial; OCR adapter not installed',formalizers:['wmt.controlled-fol/1',...formalizers.keys()],
-        proofCheckers:['smt-entailment',...verifiers.keys()],bucketScopes:['personal','rfc'],persistence:'memory_only',publication:'unavailable',
+        reasoningPolicies:['wmt.strict-specificity-greedy/1','wmt.named-normal-extensions/1'],proofCheckers:['smt-entailment','smt-explanation-witness',...verifiers.keys()],bucketScopes:['personal','rfc'],persistence:'memory_only',publication:'unavailable',
         runtime:JSON.parse(await readFile(new URL('./runtime/manifest.json',import.meta.url),'utf8'))});
       if(method==='GET' && url.pathname==='/v1/openapi.json')return json(response,200,JSON.parse(await readFile(new URL('./openapi.json',import.meta.url),'utf8')));
       if(method==='GET' && url.pathname==='/v1/buckets')return json(response,200,{buckets:repository.list()});
@@ -55,7 +55,7 @@ export function createSidecarServer({client=createNodeClient(),repository=new Bu
       }
       if(method==='GET' && segments[0]==='v1' && segments[1]==='submissions' && segments[3]==='sidecar' && segments.length===4) {
         const p=get(segments[2]),related=receipts.filter(r=>r.submissionId===p.submission.id);
-        return json(response,200,exportSidecar(p.submission,{bucketReceipts:related,buckets:repository.export().versions}));
+        return json(response,200,exportSidecar(p.submission,{bucketReceipts:related,buckets:repository.export().versions,extensionReceipts:repository.export().extensionReceipts}));
       }
       if(method!=='POST')return json(response,method==='GET'?404:405,{format:'wmt.api-error/1',code:method==='GET'?'not_found':'method_unavailable',message:'Only documented GET/POST operations are available.'});
       requireThat((request.headers['content-type']??'').split(';')[0]==='application/json','Use application/json.');
@@ -89,6 +89,11 @@ export function createSidecarServer({client=createNodeClient(),repository=new Bu
           }
         } else if(action==='review') {
           closed(input,['expectedRevision','actorId','sourceClaimIds'],'review request');next=await reviewSubmission(before,input);
+        } else if(action==='reasoning/defaults') {
+          closed(input,['expectedRevision','request','limits'],'defaults analysis request');
+          const receipt=await analyzeSubmissionDefaults(before,input.request,client,{...options,limits:input.limits??{}});
+          requireThat(get(id).revision===expectedRevision,'Submission changed during analysis.','stale_version');
+          return json(response,200,{revision:expectedRevision,receipt});
         } else if(action==='proofs') {
           closed(input,['expectedRevision','proofs'],'proof attachment request');requireThat(Array.isArray(input.proofs) && input.proofs.length<=16,'Limit proof artifacts to 16.');
           const ids=new Set();for(const proof of input.proofs){await validateProof(proof);requireThat(!ids.has(proof.id),'Proof IDs must be unique.');ids.add(proof.id);}
@@ -101,11 +106,24 @@ export function createSidecarServer({client=createNodeClient(),repository=new Bu
       if(segments[0]==='v1' && segments[1]==='buckets' && segments.length===4) {
         const id=segments[2];
         if(segments[3]==='submissions') {
-          closed(input,['expectedVersion','expectedDigest','actorId','submissionId','submissionRevision','idempotencyKey','limits'],'bucket submission request');
+          closed(input,['expectedVersion','expectedDigest','actorId','submissionId','submissionRevision','idempotencyKey','limits','enumeratePositions'],'bucket submission request');
           const p=get(input.submissionId);requireThat(input.submissionRevision===p.revision,'Submission revision changed before checking.','stale_version');
           const result=await repository.submit(id,{...input,submission:clone(p.submission),signal:controller.signal});
           if(!receipts.some(r=>r.id===result.receipt.id))receipts.push(result.receipt);
           return json(response,200,result);
+        }
+        if(segments[3]==='default-extensions') {
+          closed(input,['expectedVersion','expectedDigest','actorId','submissionId','submissionRevision','candidateIR','request','limits'],'bucket extension request');
+          requireThat(input.candidateIR!==undefined?input.submissionId===undefined && input.submissionRevision===undefined:typeof input.submissionId==='string' && Number.isSafeInteger(input.submissionRevision),'Choose either candidate IR or a versioned submission.');
+          let submission;
+          if(input.submissionId!==undefined){const p=get(input.submissionId);requireThat(p.revision===input.submissionRevision,'Submission revision changed.','stale_version');submission=clone(p.submission);}
+          const receipt=await repository.enumerateDefaults(id,{expectedVersion:input.expectedVersion,expectedDigest:input.expectedDigest,actorId:input.actorId,submission,candidateIR:input.candidateIR,request:input.request,limits:input.limits,signal:controller.signal});
+          if(submission)requireThat(get(input.submissionId).revision===input.submissionRevision,'Submission changed during enumeration.','stale_version');
+          return json(response,200,{receipt});
+        }
+        if(segments[3]==='extension-forks') {
+          closed(input,['receiptId','extensionId','newId','name','actorId','expectedVersion','expectedDigest'],'extension adoption request');
+          return json(response,201,{bucket:await repository.forkExtension(id,{...input,signal:controller.signal})});
         }
         if(segments[3]==='forks') {
           closed(input,['receiptId','keepIds','newId','name','actorId','expectedVersion','expectedDigest'],'bucket fork request');
