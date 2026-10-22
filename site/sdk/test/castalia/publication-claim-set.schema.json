@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://castalia.example/schemas/publication-claim-set.schema.json",
+  "title": "PublicationClaimSet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "revision",
+    "publicationRevision",
+    "extractionStatus",
+    "coverageNote",
+    "claims",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "castalia.publication-claim-set.v1" },
+    "id": { "type": "string", "pattern": "^PCS-[0-9]{4,}$" },
+    "revision": { "type": "string", "pattern": "^rev-claim-set-[a-z0-9-]+$" },
+    "publicationRevision": {
+      "type": "string",
+      "pattern": "^rev-publication-[a-z0-9-]+$"
+    },
+    "extractionStatus": {
+      "enum": ["candidate_partial", "reviewed_partial", "reviewed_complete"]
+    },
+    "coverageNote": { "type": "string", "minLength": 1 },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement",
+          "kind",
+          "epistemicGrade",
+          "sourceLocator",
+          "reviewState",
+          "formalizationStatus",
+          "dependencies"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^CLM-[0-9]{4,}$" },
+          "statement": { "type": "string", "minLength": 1 },
+          "kind": {
+            "enum": [
+              "definition",
+              "axiom",
+              "theorem",
+              "empirical",
+              "model",
+              "hypothesis",
+              "interpretive"
+            ]
+          },
+          "epistemicGrade": {
+            "enum": ["source_stated", "derived", "measured", "speculative"]
+          },
+          "sourceLocator": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pages", "section"],
+            "properties": {
+              "pages": { "type": "string", "minLength": 1 },
+              "section": { "type": "string", "minLength": 1 }
+            }
+          },
+          "reviewState": { "enum": ["candidate", "confirmed", "rejected"] },
+          "formalizationStatus": {
+            "enum": [
+              "unformalized",
+              "drafted",
+              "checked",
+              "refuted",
+              "uncheckable"
+            ]
+          },
+          "dependencies": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^CLM-[0-9]{4,}$" }
+          },
+          "leanDeclaration": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

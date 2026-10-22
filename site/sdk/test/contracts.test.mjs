@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
+import {demoPaper,client} from './helpers.mjs';
+import {toCastaliaClaimSet,toCastaliaAnalysis,BucketRepository,sha256} from '../index.mjs';
+const read=async path=>JSON.parse(await readFile(new URL(path,import.meta.url)));
+test('Castalia projections validate against exact pinned publication schemas without inventing Lean receipts or completeness',async()=>{
+  const ajv=new Ajv2020({strict:true});addFormats(ajv);
+  const publication=ajv.compile(await read('./castalia/publication-claim-set.schema.json'));
+  const analysis=ajv.compile(await read('./castalia/paper-analysis-semantic.schema.json'));
+  const paper=await demoPaper(),claimIdMap=Object.fromEntries(paper.extraction.claims.map((c,i)=>[c.id,'CLM-'+String(i+1).padStart(4,'0')]));
+  const projection=toCastaliaClaimSet(paper,{id:'PCS-0001',revision:'rev-claim-set-sdk-demo',publicationRevision:'rev-publication-sdk-demo',claimIdMap});
+  assert(publication(projection),JSON.stringify(publication.errors));assert.equal(projection.extractionStatus,'reviewed_partial');
+  assert(projection.claims.every(c=>!('leanDeclaration'in c) && c.formalizationStatus!=='checked'));
+  const repo=new BucketRepository(client),b=await repo.create({id:'castalia',name:'Model',owner:'person:test'});
+  const result=await repo.submit(b.id,{expectedVersion:1,expectedDigest:b.digest,actorId:b.owner,submission:paper,idempotencyKey:'projection'});
+  const record=toCastaliaAnalysis(result.receipt,{id:'PAS-0001',targetId:'FMT-0001',snapshotId:'PMS-SDK-DEMO'});
+  assert(analysis(record),JSON.stringify(analysis.errors));assert.equal(record.status,'exhausted');assert.match(record.stopReason,/completed.*consistent/);
+  assert.throws(()=>toCastaliaClaimSet(paper,{id:'PCS-0001',revision:'rev-claim-set-sdk-demo',publicationRevision:'rev-publication-sdk-demo',claimIdMap:{}}),/explicitly allocated/);
+});
+test('OpenAPI schemas describe real requests and reject ungoverned publication/checker fields',async()=>{
+  const api=await read('../openapi.json'),ajv=new Ajv2020({strict:false});
+  const whole={$id:'https://wmt.local/openapi',...api};ajv.addSchema(whole);
+  const compile=name=>ajv.compile({$ref:'https://wmt.local/openapi#/components/schemas/'+name});
+  const review=compile('Review');assert(review({expectedRevision:1,actorId:'person:test',sourceClaimIds:['c_one']}));assert(!review({expectedRevision:1,actorId:'person:test',sourceClaimIds:['c_one'],approvePublication:true}));
+  const paper=await demoPaper(),ir=compile('WmtIR');assert(ir(paper.proposal.ir),JSON.stringify(ir.errors));
+  const source=await read('./castalia/source.json');
+  for(const [name,hash] of Object.entries(source.filesSha256))assert.equal(await sha256(await readFile(new URL('./castalia/'+name,import.meta.url))),hash);
+});

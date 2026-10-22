@@ -1,0 +1,55 @@
+{
+  "format": "wmt.entity-schemas/1",
+  "schemas": [
+    {
+      "id": "contact/1",
+      "fields": {
+        "label": "string",
+        "email": "string",
+        "embedding": "embedding"
+      },
+      "equals": {
+        "id": "email-casefold/1",
+        "requires": {
+          "email": "string"
+        },
+        "source": "open Wmt_Entity;;\nlet equals (_ : graph) (a : entity) (b : entity) : comparison =\n  match text a \"email\", text b \"email\" with\n  | Some x, Some y ->\n      decision (String.lowercase_ascii (String.trim x) =\n                String.lowercase_ascii (String.trim y))\n  | _ -> unknown \"Both entities need email\"\n;;\n"
+      }
+    },
+    {
+      "id": "contact-semantic/1",
+      "extends": "contact/1",
+      "equals": {
+        "id": "cosine-092/1",
+        "requires": {
+          "embedding": "embedding"
+        },
+        "source": "open Wmt_Entity;;\n(* Override only equals; keep the inherited contact fields. *)\nlet equals (_ : graph) (a : entity) (b : entity) : comparison =\n  cosine ~threshold:0.92 \"embedding\" a b\n;;\n"
+      }
+    },
+    {
+      "id": "contact-colleague/1",
+      "extends": "contact-semantic/1",
+      "equals": {
+        "id": "colleague-cosine/1",
+        "requires": {
+          "embedding": "embedding"
+        },
+        "source": "open Wmt_Entity;;\n(* A policy can also inspect the supplied graph. *)\nlet equals (g : graph) (a : entity) (b : entity) : comparison =\n  let shared = List.exists\n    (fun id -> List.mem id (targets g b \"worksAt\"))\n    (targets g a \"worksAt\") in\n  if shared then cosine ~threshold:0.92 \"embedding\" a b\n  else decision false\n;;\n"
+      }
+    },
+    {
+      "id": "organization/1",
+      "fields": {
+        "label": "string"
+      },
+      "equals": {
+        "id": "label-exact/1",
+        "requires": {
+          "label": "string"
+        },
+        "source": "open Wmt_Entity;;\nlet equals (_ : graph) (a : entity) (b : entity) : comparison =\n  decision (text a \"label\" = text b \"label\")\n;;\n"
+      }
+    }
+  ]
+}

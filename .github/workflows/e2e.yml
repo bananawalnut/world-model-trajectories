@@ -5,8 +5,26 @@
 name: e2e (real browser)
 on:
   push: { branches: [main] }
+  pull_request: {}
   workflow_dispatch: {}
 jobs:
+  sdk:
+    name: Paper SDK and API contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install paper SDK dependencies
+        run: npm ci --prefix site/sdk --no-audit --no-fund
+      - name: Verify PDF extraction, bucket transactions, proofs and Castalia projections
+        # Each test file launches independent Z3/Wasm workers. Keep the bounded
+        # solver fixtures from competing with the HTTP/contract fixtures for CPU.
+        run: node --test --test-concurrency=1 site/sdk/test/*.test.mjs
+      - name: Type-check the SDK against a Castalia consumer
+        run: npm run test:types --prefix site/sdk
+      - name: Type-check authored definition draft adapters
+        run: site/sdk/node_modules/.bin/tsc --noEmit --strict --skipLibCheck --module NodeNext --target ES2022 --lib ES2022,DOM site/papers/formal-drafts.d.mts site/papers/reviewed-draft.d.mts
   e2e:
     runs-on: ubuntu-latest
     steps:
@@ -22,8 +40,64 @@ jobs:
         run: |
           python3 -m http.server 8799 --directory site >/tmp/srv.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://localhost:8799/ >/dev/null && break; sleep 1; done
+      - name: Record browser runner resource limits
+        run: |
+          python3 - <<'PY'
+          import json, os, resource
+          from pathlib import Path
+          def read(path):
+              p = Path(path)
+              return p.read_text().strip() if p.exists() else None
+          print(json.dumps({
+              "logicalCpus": os.cpu_count(),
+              "processLimit": resource.getrlimit(resource.RLIMIT_NPROC),
+              "pidsCurrent": read('/sys/fs/cgroup/pids.current'),
+              "pidsMax": read('/sys/fs/cgroup/pids.max'),
+              "memoryCurrent": read('/sys/fs/cgroup/memory.current'),
+              "memoryMax": read('/sys/fs/cgroup/memory.max'),
+          }, indent=2))
+          PY
+      - name: Check kernel adapter and committed artifacts
+        run: node --test e2e/kernel-model.test.mjs e2e/entity-model.test.mjs e2e/coherence-view.test.mjs e2e/walkthrough-model.test.mjs
       - name: Run e2e
         working-directory: e2e
         env:
           BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
         run: node e2e.mjs
+      - name: Run replaceable-kernel experiment in the browser
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node kernels.mjs
+      - name: Run schema-defined entity equality in the browser
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node entities.mjs
+      - name: Run PDF submission and versioned bucket workbench
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node papers.mjs
+      - name: Walk from a rendered PDF through formalization, proofs and bucket formation
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node walkthrough.mjs
+      - name: Check defaults, entity exceptions, collective conflicts and witnesses
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node reasoning.mjs
+      - name: Review synthetic definitions and admit exact code into checked buckets
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node definitions.mjs

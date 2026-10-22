@@ -9,6 +9,64 @@ consistency, not truth.*
 It is a sibling of [stella / svenvs](https://github.com/emberian): same
 honesty discipline, same design language, no overclaim.
 
+The [paper sidecar SDK](site/sdk/README.md) adds named, versioned personal and
+RFC buckets, PDF claim extraction, reviewed formalization, computational proof
+artifacts, a loopback submission API and Castalia publication-contract adapters.
+Open `site/papers.html` for the integrated paper/bucket workbench. It uses the
+original WMT coherence lattice; the kernel labs remain optional tools alongside
+it. General prose uses configured extraction/formalization adapters or authored
+IR; the built-in parser has an explicit controlled grammar.
+
+The paper workbench restores the visual coherence field: a claim-to-conflict
+membership map, a claim-by-position SAT matrix, acceptance across every/some/no
+coherent positions, and the least-entrenchment repair. Selecting a claim shows
+its typed English rendering and PDF locator; selecting a position highlights
+the matching fork card. Conflict groups preserve higher-order disagreements
+without asserting that each pair conflicts. The trajectory tree connects exact
+immutable versions and coherent forks; selecting a version compares it with its
+current bucket. Large maps/matrices are scrollable and paginated without
+discarding positions. Unknown and incomplete checks show no exhaustive
+acceptance or repair. These are views of checked claim sets, not truth
+assignments to a model.
+
+## Reusable paper review checkpoint
+
+The experimental paper SDK is now `0.1.0-experimental.5`. Open
+[`site/definitions.html`](site/definitions.html) for a public, generated-PDF
+example of one definition binding, source uses, retained ambiguous candidates,
+editable typed IR, explicit formalization review and checked bucket admission.
+[`site/reasoning.html`](site/reasoning.html) demonstrates collective conflicts,
+minimal explanation witnesses, entity-specific exceptions and all finite normal
+default extensions, including tied preferred alternatives and verified forks.
+
+Private paper sources, assessments and fixtures are not included. Public tests
+generate their own synthetic PDF and require no private files. The existing
+Rust/Wasm core, executable-kernel artifacts and Z3 assets remain unchanged.
+See [CHECKPOINT.md](CHECKPOINT.md) for scope, compatibility and verification.
+
+## Guided PDF-to-buckets walkthrough
+
+Open **`site/walkthrough.html`** (or use the walkthrough button in the paper
+workbench) for a paced, runnable tour. It starts with a rendered two-page
+synthetic paper and highlights exact source passages. Extract its candidates,
+inspect typed predicates/constants and the composed formula tree, review five
+source mappings, and explicitly defer two ambiguous passages. An optional
+scenario tests the stronger “all” interpretation of “normally” without adopting
+it. The next steps check a lemma and theorem from their named premises, show a
+failed entailment without an observation, form an RFC model, and fork a
+conflicting personal bucket using the real solver positions. Export the sidecar,
+author reading annotations and a workspace that can be restored in the main
+paper workbench with fresh review/checking.
+
+The role labels are curated author annotations, distinct from the SDK's
+heuristic candidate kinds. Vocabulary comes from the configured example
+lexicon. The tour does not claim general mathematical-paper parsing or execute
+the paper's prose proof sketches. Bucket coherence treats reviewed formulas as
+assertions; a fork's retained theorem does not inherit a new proof when its
+original premises are dropped. The proof receipts retain those exact premises.
+The demo has its own in-memory workspace and leaves the main workbench alone.
+Rebuild its PDF with `tools/build-walkthrough-paper.py` (ReportLab required).
+
 ## The one idea
 
 **The tool does not parse natural language. You + your own LLM do, in the
@@ -200,6 +258,23 @@ cd ../site && python3 -m http.server   # then open http://localhost:8000
 ```
 
 Or just open the deployed page and click **Load the penguin demo**.
+
+## Replaceable kernel experiment
+
+Open `site/kernel-lab.html` to compare an Isabelle-exported veri7vn mass
+calculation with an editable OCaml kernel and comparison function. Both run in
+the browser; Wasm-GC is the default and `?runtime=js` selects the JavaScript
+backend. WMT and Z3 check claims conditional on the computed comparison.
+The original workbench and its saved branches remain compatible.
+
+Open `site/entity-lab.html` for knowledge-graph entities with schema-defined,
+overridable OCaml equals functions. Inherit typed fields, compare embeddings
+exactly or by cosine threshold, and use graph relationships inside your policy.
+WMT checks concrete match claims while preserving distinct entity IDs. See the
+[entity contract and examples](experiments/kernels/ENTITIES.md).
+
+See [the experiment](experiments/kernels/README.md) for examples, the kernel
+contract, exact proof scope, build instructions and browser tests.
 
 ## License
 

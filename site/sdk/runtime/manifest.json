@@ -1,0 +1,59 @@
+{
+  "format": "wmt.sdk-runtime/1",
+  "sdkVersion": "0.1.0-experimental.5",
+  "engine": "wmt-core",
+  "engineRevision": "sha256:73c8cd043adf6b0cfe05a866a5091f453ef2bd804c6b7532a2858e358bfeb0bc",
+  "solver": "z3-solver/4.16.0",
+  "solverWasmSha256": "a4bd752d13df6161d3cb9459d72031941285aaacca2e6f3a0becb7d2876f3695",
+  "logicProfile": "wmt.strict-many-sorted-fol/1",
+  "files": {
+    "wmt_core.js": "d6faaccb3a59b004a0a0f31d15879fd0d8ada83611d9ba5ce3eff82df7ab60c7",
+    "wmt_core_bg.wasm": "73c8cd043adf6b0cfe05a866a5091f453ef2bd804c6b7532a2858e358bfeb0bc",
+    "wmt_core.d.ts": "234dfbf1f693a1e8b4ef6c6f3a7eb10c8f335bd3175086d653ff49c334d96358"
+  },
+  "adaptersSha256": {
+    "analysis.mjs": "58ac0608c902286ddf5d2b2c443191e48947355f1dabbef6a36b2435137cec04",
+    "buckets.mjs": "aaedf75c2046b40b48b245d0edffa45312732890750d7de8482a1bf18d62ecf4",
+    "castalia.mjs": "aa2b2c7b04fc04ef949479798834a840582c701a4ccc3f66f6be13161962ce0c",
+    "claims.mjs": "0b289582efb4b21376f7fce8d5791d62ddae8f684f66598edec738a2dd8731f8",
+    "client.mjs": "ede5f299a727c18d22ae5539463dec888950e30675aef147efa3a84a3263a178",
+    "default-extensions.mjs": "1318c1cc8c5bd861adcff638d2ea7ad156e57a468a8ffd6fedfc013880695d81",
+    "definition-review.mjs": "bd05fc81541238bc2ab72f23c4aadbac520f41bd40fbdd4f5c0f2338b2ff2f43",
+    "formalizer.mjs": "c0be8a6748437c3c1c70e20f565dee0dd5485f589563e224616db706208fce17",
+    "hash.mjs": "307f86f4477e7c94a318d66e537cc7e25305d884a5667f5f88614c0d7c758462",
+    "index.mjs": "9d29af6585adf4c8226b5c4b3d2788b1acb6c8dc89b88a6e8b497c37b59d10d9",
+    "ir.mjs": "c0be9429eab3be4f5c6b77dfa2a9f5f8c8d3da6796e9e0d9236a02f07f362f91",
+    "node-worker.mjs": "dbe0c7723779cef66dfd6f545703e7c12b6c0c0f6cba2fc32feb8f4655d90401",
+    "node.mjs": "6c0c4451037df10668e79161e76e0be032abd3d1b8bdec8c81b09f9b97a0f71e",
+    "pdf.mjs": "9b007bfd268be0bd417a675aacbb211d2497cfb27893fab428be7e75e482f730",
+    "proof-candidates.mjs": "ab9ff405499a534cd43f0a9dcea27479f79c705b659f49c125d05fd539982a4c",
+    "proofs.mjs": "638e876f9c28529f4a0f88f222a26daaa33a65915ef079261f699f661c264748",
+    "reasoning.mjs": "4103a5145a9d02f06a6455e213b5d7d59215db8a7ee2e06f5c7243031b567a3e",
+    "server.mjs": "a0148e5f206aa523b649c66564b9cf0778d78220d21c91c65719fc6db67a9da3",
+    "submissions.mjs": "4d1886a1e3a42ca87d5dea313250792d4e028d20ebd9fdff917fc60dbf827baf"
+  },
+  "browserAdapterSha256": "dc5c5023ec6bbd2eed6cfdf16b211c8d96fb3341131cde715fbfe6257d912c75",
+  "pdfjs": {
+    "version": "5.6.205",
+    "moduleSha256": "d4b840a3238bf6fbebe3dec7a7665757dad60fe014d657351a3f1f067a3df924",
+    "workerSha256": "499da1f7f1c6c24be898b556638d2ffec999b2ad234c796508e3d7c7025c28cb",
+    "standardFontsSha256": {
+      "FoxitDingbats.pfb": "845c752392b6c914fb989c75a08b7792b88f542d2499042ef2889f8c814a16ed",
+      "FoxitFixed.pfb": "b6c8fe53f134b8b6d4578cd2d544df4cee9624c4efa8d51a560fb40ea296101b",
+      "FoxitFixedBold.pfb": "f1b7159702973f54fc86254ea38bcf3712b2a736eb3a0995751e9f4bb45ad603",
+      "FoxitFixedBoldItalic.pfb": "8a000945843bd31add06aee63bf9fd41b7578b4f3242a4b7cd46349ad9d24d4d",
+      "FoxitFixedItalic.pfb": "5007faf8320fa1fcc08b8894b356ad976f60b992ba29ee5272578bbdebaf3876",
+      "FoxitSerif.pfb": "4f57d2b9d884af8f907bf22df6019b52d86cbf6214fdbd02b1ae05472a543f35",
+      "FoxitSerifBold.pfb": "0bdf4b04e964139818d51eda03d566ba999fc3ba2421b1c6c51f9dc969022e80",
+      "FoxitSerifBoldItalic.pfb": "a406cac82583bf98175cb62c87ed5e95c45fbb34eece63a10b0a13e793cb2e10",
+      "FoxitSerifItalic.pfb": "610ae0687198045c4db5d1a6650fd5e92536631706382eb8b72e38df578d0ae9",
+      "FoxitSymbol.pfb": "47967d055530e7357088a08403115425643ec2cdfd6201ba8af0fbd7116c1539",
+      "LICENSE_FOXIT": "b578cdd2345840ada550bd12519533812320d5f1d21cf4c1c7e1b1b0a31c98b7",
+      "LICENSE_LIBERATION": "93fed46019c38bbe566b479d22148e2e8a1e85ada614accb0211c37b2c61c19b",
+      "LiberationSans-Bold.ttf": "361c61b82d575c5c35fd9157fda8b0194bcfcd0d88ea8521a4fb5dd53d33dddc",
+      "LiberationSans-BoldItalic.ttf": "a224075ac17495ad0a3af3bc0a419ac0704a8b3fd1095456201fb9b095fc281d",
+      "LiberationSans-Italic.ttf": "832b4406dbef23628800d3aaad21048534ac84d7e3ad955be83b8172ed8ef512",
+      "LiberationSans-Regular.ttf": "f8ace1f892b2bd9dc1792ba7f097fa7588f84fed48321480e04de5390828221f"
+    }
+  }
+}

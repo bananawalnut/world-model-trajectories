@@ -1,0 +1,2013 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WMT paper sidecar SDK",
+    "version": "0.1.0-experimental.1",
+    "description": "Experimental loopback API. In-memory, self-attributed actors, no publication or external code execution. Authentication and signed Gate 0 release are host responsibilities."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8801"
+    }
+  ],
+  "paths": {
+    "/v1/capabilities": {
+      "get": {
+        "summary": "Installed parsers/checkers, runtime versions and unsigned-release boundary",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "summary": "This OpenAPI contract",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        }
+      }
+    },
+    "/v1/submissions": {
+      "post": {
+        "summary": "Submit PDF bytes, metadata and optional computational proof artifacts",
+        "responses": {
+          "201": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPaper"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/submissions/{submissionId}": {
+      "get": {
+        "summary": "Read exact current submission revision",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ]
+      }
+    },
+    "/v1/submissions/{submissionId}/formalizations": {
+      "post": {
+        "summary": "Create a typed draft with source mappings; review is cleared",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Formalize"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/submissions/{submissionId}/review": {
+      "post": {
+        "summary": "Confirm an explicit subset of source-to-formula mappings",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/submissions/{submissionId}/proofs": {
+      "post": {
+        "summary": "Attach exact-bound evidence; do not execute submitted code",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachProofs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/submissions/{submissionId}/proofs/check": {
+      "post": {
+        "summary": "Run installed checkers, preserving unchecked artifacts",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckProofs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/submissions/{submissionId}/sidecar": {
+      "get": {
+        "summary": "Download source, proof artifacts and exact bucket evidence; not published",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ]
+      }
+    },
+    "/v1/buckets": {
+      "get": {
+        "summary": "List current named bucket versions",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an explicitly owned personal or RFC-scoped bucket",
+        "responses": {
+          "201": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBucket"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/buckets/{bucketId}": {
+      "get": {
+        "summary": "Read current or explicitly requested immutable bucket version",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/v1/buckets/{bucketId}/submissions": {
+      "post": {
+        "summary": "Check and atomically append only a complete consistent reviewed submission",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketSubmission"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/buckets/{bucketId}/forks": {
+      "post": {
+        "summary": "Create a new bucket from an exact solver-verified coherent position",
+        "responses": {
+          "201": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Fork"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/receipts/{receiptId}": {
+      "get": {
+        "summary": "Read immutable insertion, conflict or stop evidence",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ]
+      }
+    },
+    "/v1/submissions/{submissionId}/reasoning/defaults": {
+      "post": {
+        "summary": "Analyze explicit defaults in a reviewed interpretation; return a separate source-bound receipt without changing the submission or strict buckets",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeDefaults"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/buckets/{bucketId}/default-extensions": {
+      "post": {
+        "summary": "Enumerate all grounded normal-default extensions for an exact strict parent bucket",
+        "responses": {
+          "200": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketExtensions"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/buckets/{bucketId}/extension-forks": {
+      "post": {
+        "summary": "Freshly check an enumerated extension and adopt it as an immutable bucket fork",
+        "responses": {
+          "201": {
+            "description": "Versioned SDK JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale version, conflicting revision or idempotency reuse"
+          },
+          "413": {
+            "description": "Resource or byte budget exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdoptExtension"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Limits": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "maxSteps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000
+          },
+          "solverTimeoutMs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000
+          },
+          "wallTimeMs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60000
+          }
+        },
+        "required": []
+      },
+      "Signature": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "ret": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "gloss": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "args"
+        ]
+      },
+      "Term": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "t": {
+                "const": "var"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "t",
+              "name"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "t": {
+                "const": "int"
+              },
+              "v": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "t",
+              "v"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "t": {
+                "const": "real"
+              },
+              "v": {
+                "type": "string",
+                "maxLength": 160,
+                "pattern": "^(-?\\d+(\\.\\d+)?|\\(/ -?\\d+ [1-9]\\d*\\))$"
+              }
+            },
+            "required": [
+              "t",
+              "v"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "t": {
+                "const": "app"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Term"
+                }
+              }
+            },
+            "required": [
+              "t",
+              "name"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "t": {
+                "const": "arith"
+              },
+              "op": {
+                "enum": [
+                  "+",
+                  "-",
+                  "*"
+                ]
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Term"
+                }
+              }
+            },
+            "required": [
+              "t",
+              "op",
+              "args"
+            ]
+          }
+        ]
+      },
+      "Formula": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "pred"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Term"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "name"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "eq"
+              },
+              "a": {
+                "$ref": "#/components/schemas/Term"
+              },
+              "b": {
+                "$ref": "#/components/schemas/Term"
+              }
+            },
+            "required": [
+              "op",
+              "a",
+              "b"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "cmp"
+              },
+              "rel": {
+                "enum": [
+                  "<",
+                  "<=",
+                  ">",
+                  ">="
+                ]
+              },
+              "a": {
+                "$ref": "#/components/schemas/Term"
+              },
+              "b": {
+                "$ref": "#/components/schemas/Term"
+              }
+            },
+            "required": [
+              "op",
+              "rel",
+              "a",
+              "b"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "not"
+              },
+              "x": {
+                "$ref": "#/components/schemas/Formula"
+              }
+            },
+            "required": [
+              "op",
+              "x"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "enum": [
+                  "and",
+                  "or"
+                ]
+              },
+              "xs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Formula"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "xs"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "enum": [
+                  "imp",
+                  "iff"
+                ]
+              },
+              "a": {
+                "$ref": "#/components/schemas/Formula"
+              },
+              "b": {
+                "$ref": "#/components/schemas/Formula"
+              }
+            },
+            "required": [
+              "op",
+              "a",
+              "b"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "enum": [
+                  "forall",
+                  "exists"
+                ]
+              },
+              "vars": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "sort": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "sort"
+                  ]
+                }
+              },
+              "body": {
+                "$ref": "#/components/schemas/Formula"
+              }
+            },
+            "required": [
+              "op",
+              "vars",
+              "body"
+            ]
+          }
+        ]
+      },
+      "Claim": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "formula": {
+            "$ref": "#/components/schemas/Formula"
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "active": {
+            "const": true
+          },
+          "defeasible": {
+            "const": false
+          },
+          "gloss": {
+            "type": "string"
+          },
+          "back": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "formula"
+        ]
+      },
+      "PdfAsset": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "base64": {
+            "type": "string",
+            "maxLength": 16000000
+          }
+        },
+        "required": [
+          "fileName",
+          "base64"
+        ]
+      },
+      "Proof": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "const": "wmt.computational-proof/1"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "documentHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "proposalDigest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "irDigest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "claimIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    }
+                  }
+                },
+                "required": [
+                  "documentHash",
+                  "proposalDigest",
+                  "irDigest",
+                  "claimIds"
+                ]
+              }
+            ]
+          },
+          "evidence": {
+            "type": "object"
+          },
+          "assets": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "fileName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "mediaType": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "base64": {
+                  "type": "string",
+                  "maxLength": 2666668
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "fileName",
+                "mediaType",
+                "base64",
+                "sha256"
+              ]
+            }
+          }
+        },
+        "required": [
+          "format",
+          "id",
+          "kind",
+          "binding",
+          "evidence",
+          "assets"
+        ]
+      },
+      "Mapping": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sourceClaimId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "formalClaimIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        },
+        "required": [
+          "sourceClaimId",
+          "formalClaimIds"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "const": "wmt.api-error/1"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "code",
+          "message"
+        ]
+      },
+      "WmtIR": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sorts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "preds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Signature"
+            }
+          },
+          "funcs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Signature"
+            }
+          },
+          "claims": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/components/schemas/Claim"
+            }
+          }
+        },
+        "required": [
+          "sorts",
+          "preds",
+          "funcs",
+          "claims"
+        ]
+      },
+      "SubmitPaper": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "authors": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "pdf": {
+            "$ref": "#/components/schemas/PdfAsset"
+          },
+          "rfcRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publicationRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proofs": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "$ref": "#/components/schemas/Proof"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "authors",
+          "pdf"
+        ]
+      },
+      "CreateBucket": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scope": {
+            "enum": [
+              "personal",
+              "rfc"
+            ]
+          },
+          "rfcRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ir": {
+            "$ref": "#/components/schemas/WmtIR"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "owner"
+        ]
+      },
+      "Formalize": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "parserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "vocabulary": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "sort": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "classes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              },
+              "entities": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              }
+            },
+            "required": [
+              "sort",
+              "classes",
+              "entities"
+            ]
+          },
+          "ir": {
+            "$ref": "#/components/schemas/WmtIR"
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mapping"
+            }
+          },
+          "unsupported": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sourceClaimId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "sourceClaimId",
+                "reason"
+              ]
+            }
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ]
+      },
+      "Review": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "sourceClaimIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "actorId",
+          "sourceClaimIds"
+        ]
+      },
+      "AttachProofs": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "proofs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Proof"
+            }
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "proofs"
+        ]
+      },
+      "CheckProofs": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ]
+      },
+      "BucketSubmission": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "submissionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "submissionRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          },
+          "enumeratePositions": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "expectedDigest",
+          "actorId",
+          "submissionId",
+          "submissionRevision",
+          "idempotencyKey"
+        ]
+      },
+      "Fork": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "receiptId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "keepIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "newId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "expectedDigest",
+          "actorId",
+          "receiptId",
+          "keepIds",
+          "newId",
+          "name"
+        ]
+      },
+      "DefaultsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "defaultClaimIds"
+        ],
+        "properties": {
+          "defaultClaimIds": {
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "targetClaimId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy": {
+            "const": "wmt.strict-specificity-greedy/1"
+          }
+        }
+      },
+      "AnalyzeDefaults": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "request"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "request": {
+            "$ref": "#/components/schemas/DefaultsRequest"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          }
+        }
+      },
+      "ExtensionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "defaultClaimIds"
+        ],
+        "properties": {
+          "defaultClaimIds": {
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "targetClaimId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "policy": {
+            "const": "wmt.named-normal-extensions/1"
+          },
+          "entities": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "sort"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "sort": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BucketExtensions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion",
+          "expectedDigest",
+          "actorId",
+          "request"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "request": {
+            "$ref": "#/components/schemas/ExtensionsRequest"
+          },
+          "submissionId": {
+            "type": "string"
+          },
+          "submissionRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "candidateIR": {
+            "$ref": "#/components/schemas/WmtIR"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "candidateIR"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "submissionId"
+                  ]
+                },
+                {
+                  "required": [
+                    "submissionRevision"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "submissionId",
+              "submissionRevision"
+            ],
+            "not": {
+              "required": [
+                "candidateIR"
+              ]
+            }
+          }
+        ]
+      },
+      "AdoptExtension": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "receiptId",
+          "extensionId",
+          "newId",
+          "name",
+          "actorId",
+          "expectedVersion",
+          "expectedDigest"
+        ],
+        "properties": {
+          "receiptId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "extensionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedDigest": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
