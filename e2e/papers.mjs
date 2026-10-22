@@ -25,7 +25,8 @@ try {
   await click('check-paper-proofs');assert.equal(await page.locator('.evidence-card.checked').count(),1);
   console.log('PASS real PDF upload, exact source locators, partial extraction, controlled parser, human confirmation and entailment checking');
   await click('submit-to-bucket');let r=await receipt();
-  assert.equal(r.outcome,'conflict');assert.equal(r.analysis.positions.length,4);assert.equal(r.analysis.conflicts.length,2);
+  const diagnostic=JSON.stringify({outcome:r.outcome,consistency:r.consistency,analysis:r.analysis});
+  assert.equal(r.outcome,'conflict',diagnostic);assert.equal(r.analysis.complete,true,diagnostic);assert.equal(r.analysis.positions.length,4,diagnostic);assert.equal(r.analysis.conflicts.length,2,diagnostic);
   assert.equal(await page.locator('#bucket-summary [data-version]').getAttribute('data-version'),'1');
   assert.equal(await page.locator('[data-adopt-position]').count(),4);
   assert.match(await page.locator('.solver-state').textContent(),/UNSAT/);
