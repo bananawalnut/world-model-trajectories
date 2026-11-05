@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>From PDF to world models · WMT walkthrough</title><link rel="icon" href="data:,">
+  <script src="coi-serviceworker.min.js"></script><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="kernels/lab.css"><link rel="stylesheet" href="papers/workbench.css"><link rel="stylesheet" href="papers/walkthrough.css">
+</head><body class="kernel-experiment">
+  <nav class="nav"><span class="glyph">⊢</span><b>world-model trajectories</b><a href="papers.html">Paper workbench</a><a href="index.html">Original WMT</a><span class="z3" id="walk-ready">Opening the paper…</span></nav>
+  <main class="wrap walk-main paper-workbench" data-step="0">
+    <header class="walk-header"><p class="kick">A guided, runnable example · about 8 minutes</p><h1>Read the paper.<br><em>Build the model.</em></h1><p class="lede">Follow a PDF passage into a typed claim, inspect its building blocks, review ambiguity, check a proof, and form coherent buckets. Move at your own pace.</p></header>
+    <ol class="walk-steps" id="walk-steps" aria-label="Walkthrough steps"></ol>
+    <div id="walk-error" role="alert"></div><div class="walk-operation"><span id="walk-progress" role="status" aria-live="polite"></span><button id="walk-cancel" class="btn ghost sm" hidden>Cancel</button></div>
+    <div class="walk-layout">
+      <aside class="paper-reader panel" aria-label="Rendered PDF inspector">
+        <div class="section-heading"><div><p class="kick">The source, in context</p><h2>A small theory of Tweety</h2></div><a href="papers/walkthrough.pdf" target="_blank" rel="noopener">Open PDF ↗</a></div>
+        <div class="pdf-toolbar"><button id="pdf-prev" class="btn ghost sm" aria-label="Previous PDF page">←</button><span id="pdf-page-label">Page 1 / 2</span><button id="pdf-next" class="btn ghost sm" aria-label="Next PDF page">→</button><button id="pdf-zoom" class="btn ghost sm">Enlarge</button></div>
+        <div id="pdf-error" role="alert"></div><div class="pdf-scroll" id="pdf-scroll" tabindex="0" aria-label="Scrollable rendered PDF"><div class="pdf-sheet" id="pdf-sheet"><canvas id="pdf-canvas" role="img" aria-label="Page 1 of the synthetic example paper"></canvas><div id="pdf-highlights" aria-hidden="true"></div></div></div>
+        <div class="pdf-selection" id="pdf-selection" aria-live="polite"></div>
+        <details><summary>Extracted text for this page</summary><pre id="pdf-page-text">Available after extraction in step 2.</pre></details>
+        <p class="small muted">A synthetic teaching paper, rendered from its actual PDF bytes. Highlight boxes follow its text items. Author labels and proof sketches still need formal checks.</p>
+      </aside>
+      <section class="panel walk-stage" aria-labelledby="stage-title"><div id="walk-stage"></div><div class="walk-navigation"><button id="walk-back" class="btn ghost">← Back</button><span id="walk-gate" class="small muted"></span><button id="walk-next" class="btn warm">Next →</button></div></section>
+    </div>
+    <footer class="walk-footer small muted">Local and in memory. This walkthrough uses the existing PDF.js extractor, typed WMT IR, WMT/Z3 checks, and bucket repository. No model provider or publishing service is called. <a href="papers.html">Use your own paper in the workbench</a>.</footer>
+  </main><script type="module" src="papers/walkthrough.js"></script>
+</body></html>

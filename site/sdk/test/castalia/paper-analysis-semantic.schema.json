@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://castalia.example/schemas/paper-analysis-semantic.schema.json",
+  "title": "PaperAnalysisSemantic",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "targetId",
+    "snapshotId",
+    "engine",
+    "engineRevision",
+    "limits",
+    "status",
+    "stopReason",
+    "conclusionBoundary",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "castalia.paper-analysis-semantic.v1" },
+    "id": { "type": "string", "pattern": "^PAS-[0-9]{4,}$" },
+    "targetId": { "type": "string", "pattern": "^FMT-[0-9]{4,}$" },
+    "snapshotId": { "type": "string", "pattern": "^PMS-[A-Z0-9-]+$" },
+    "engine": { "type": "string", "minLength": 1 },
+    "engineRevision": { "type": "string", "minLength": 1 },
+    "limits": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "status": {
+      "enum": [
+        "not_run",
+        "exhausted",
+        "counterexample_found",
+        "unsupported",
+        "error"
+      ]
+    },
+    "stopReason": { "type": "string", "minLength": 1 },
+    "conclusionBoundary": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format": "wmt.kernel-build/1",
+  "upstream": "https://github.com/emberian/veri7vn",
+  "upstreamCommit": "093b59af26ff1aecaada0f5e7bda998fb2f8b6d1",
+  "isabelleVersion": "Isabelle2026-RC1",
+  "session": "Wmt_Browser_Quantity",
+  "proofBuildStatus": "passed",
+  "proofAttemptId": "090224e9503442da82ac24197cd8325f",
+  "proofMarker": "WMT_BROWSER_QUANTITY PASS oracles=0",
+  "upstreamSourceSha256": {
+    "src/extract/quantity/Quantity.thy": "4f4cccb0dd871c9a8026d524ea77a52d06371e3d625d27133517aa595d2c06f1",
+    "src/extract/quantity/Quantity_Export.thy": "2e4649aafe79fd11602ffc341477b0d79cbc79f85112949a01eee59b78c23a12",
+    "src/extract/quantity/base/Quantity_Base.thy": "ab0bcc8c4676e85195a80fb39d2c4a1dabfcdea09d49e6c4011be35370eaaa7a",
+    "src/extract/commons/Commons_Num.thy": "d599e96013324dfb5cad5091b4c8e5be4c208409e44ea5d3001d13dac3eee087"
+  },
+  "generatedSourceSha256": "1f78b99b30777b9d2a0c9895e4abaff7aa19e3864ba686decf0bf5321846a3a7",
+  "exportTheorySha256": "16d3e82924b96e9e33fce47fce9c4f94f7e31caf15971c02ad05640d9bcf689e",
+  "runtime": "OCaml 5.3.0 / js_of_ocaml + wasm_of_ocaml 6.4.1",
+  "defaultRuntime": "Wasm-GC",
+  "runtimeFilesSha256": {
+    "ocaml-runtime.js": "f2c99a6601621f7289fa363554a90df275da1a14fb68f3591fb3ddd82a6ff55a",
+    "ocaml-wasm.js": "31c90cfd94f5954d35c702b598f2474b9f65af51d96d55c06705d98bf420d641",
+    "ocaml-wasm.assets/code-18087bb514145a7347fe.wasm": "7db05e4f12fe3a88140d32a8024f26122d9f129e830a1b712e96c1bf0be5bb81"
+  },
+  "numericRuntime": {
+    "repository": "https://github.com/janestreet/zarith_stubs_js",
+    "commit": "c8e2e3eb062eee373625f9aecca88168103e4e93"
+  },
+  "guarantee": "Upstream mass_from_volume and kernel_exact_sound dependencies checked for oracles. The OCaml/JSON adapter and browser toolchains are tested, not proved. No specialist-panel admission claimed.",
+  "theoremStatement": "kernel (MassOf m (Some V) u) = Exact k y ==> k = K_mass AND dim_of (snd V) = D_volume AND dim_of u = D_mass AND y * scale u = density m * siq V"
+}

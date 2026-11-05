@@ -1,0 +1,12 @@
+{
+  "repository": "castalia-web",
+  "commit": "b17705041334b49055e7a05d5dd9f36513657833",
+  "path": "packages/contracts/schema",
+  "filesSha256": {
+    "publication-claim-set.schema.json": "b7e9b6411c2eb552a182fd9b0a5f3b158dae56b8adf5bd005a319064633413da",
+    "paper-analysis-semantic.schema.json": "61eef8767350aa91e86b80102e0347fcd83593152a768a9cfa0a3453e162ee08",
+    "publication-claim-set.ts": "5a6e143f58fee0e0f51552426d1541c2aa37743f8d61276c8c97d23234175a29",
+    "paper-analysis-semantic.ts": "14f31b689f13f503e43e68d483324ac7b26d74a38fcd53208643622ab09f6fb3"
+  },
+  "typePath": "packages/contracts/src/generated"
+}

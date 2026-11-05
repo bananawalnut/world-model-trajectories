@@ -1,0 +1,4 @@
+session Wmt_Browser_Quantity = Veri7vn_Quantity +
+  options [document = false, threads = 2]
+  theories
+    Wmt_Browser_Quantity

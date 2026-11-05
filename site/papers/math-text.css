@@ -1,0 +1,4 @@
+.math-fragment { display:inline-block; max-width:100%; overflow-x:auto; vertical-align:middle; padding:.25em .1em; box-sizing:border-box; }
+.math-fragment .katex { font-size:1.05em; white-space:nowrap; }
+.math-display { display:block; }
+.math-display .katex-display { margin:.25em 0; }

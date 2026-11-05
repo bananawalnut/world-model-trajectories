@@ -37,10 +37,13 @@
       The trajectory is the object; the conflict is its structure.
     </p>
     <div class="cta">
+      <a class="btn warm" href="papers.html">Open papers &amp; buckets</a>
       <button class="btn warm" id="scenario">Load a worked knowledge base</button>
       <button class="btn ghost" id="seed">or the penguin</button>
       <a class="btn ghost" href="#loop">Add a claim</a>
       <a class="btn ghost" href="#how">What this is &amp; isn&rsquo;t</a>
+      <a class="btn ghost" href="kernel-lab.html">Try replaceable kernels</a>
+      <a class="btn ghost" href="entity-lab.html">Try schema-defined equals</a>
       <a class="btn ghost" href="https://github.com/emberian/world-model-trajectories">Source</a>
     </div>
   </div>
@@ -125,25 +128,25 @@
       Goal: <em>consistency, not truth.</em> It never claims your claims are right — only which subsets can hold together (the dialectic), which can&rsquo;t (the irreducible disagreements), the least-entrenchment way out, and what you&rsquo;re jointly committed to.
     </div>
     <p class="small muted">
-      A truth-maintenance system + AGM belief revision, made legible
-      (Doyle / de&nbsp;Kleer / Alchourrón–Gärdenfors–Makinson; minimal
-      conflicts &amp; their hitting-set–dual correction sets, Reiter /
-      Liffiton–Sakallah; defaults &amp; the specific-over-general via Poole
-      specificity + Brewka preferred subtheory). A Rust core
-      (<code>wmt-core</code>, wasm) owns the typed IR, the IR↔SMT compiler,
-      the English renderer, the trajectory, the full <b>MARCO</b>
-      conflict/position enumerator, the defeasible and Dung-argumentation
-      readings and the forkable-branch (de)serialization — it does
-      <em>not</em> solve. The solver is Z3&nbsp;4.16 (wasm), here in your
-      tab. The compiler, MARCO enumeration (every minimal conflict and
-      maximal coherent position, no claim-count cap), Reiter duality, the
-      min-entrenchment repair, explanation witnesses, the defeasible
-      layer, the argumentation framework, symbol auto-declaration and the
-      branch round-trip are verified end-to-end against the native Z3
-      binary — 27 tests, incl. a quantified contradiction, an arithmetic
-      one, MARCO past the old cap, the MUS↔MCS duality cross-check, plus a
-      real-browser headless run of the whole stack in CI. First load
-      fetches ~34&nbsp;MB of Z3 wasm, then it is cached.
+      WMT explores truth maintenance and belief revision through minimal
+      conflicts, their hitting-set-dual correction sets, and maximal coherent
+      positions. These mechanisms are inspired by Doyle, de Kleer, AGM,
+      Reiter and MARCO; they do not establish compliance with all those theories.
+      The Rust <code>wmt-core</code> WebAssembly module owns the typed IR,
+      SMT compiler, renderer, MARCO driver, witness finder and forkable state.
+      Z3 4.16 WebAssembly solves its queries in your tab (about 34 MB on first load).
+      Conflict diagrams preserve whole groups: pair co-membership is not a
+      binary Dung attack. Acceptance is measured across maximal coherent positions.
+      Enumeration reports when its budget is reached. The
+      <a href="papers.html">paper SDK</a> adds independently checked explanation
+      witnesses and a versioned strict-specificity/greedy defaults policy,
+      with explicit rules, provenance and stop conditions. That policy selects
+      one preferred subtheory; it does not enumerate every default extension or
+      implement every notion of Poole specificity. A separate named-entity normal
+      default mode enumerates its finite extensions, retains tied preferred
+      alternatives, and freshly checks selected bucket forks. See the
+      <a href="reasoning.html">runnable examples</a> and
+      <a href="sdk/README.md">SDK semantics and limits</a>.
     </p>
   </section>
 
@@ -156,7 +159,7 @@
     a sibling of <a href="https://github.com/emberian">stella / svenvs</a> ·
     MIT/Apache-2.0 · Z3 © Microsoft (MIT). Solving runs locally; the only data that leaves the tab is when you opt into Step&nbsp;0 (your sentences → OpenRouter, under your key).
   </div>
-</footer>
+ · <a href="reasoning.html">Reasoning examples</a> · <a href="definitions.html">Definition review</a></footer>
 
 <script src="vendor/z3/z3-built.js"></script>
 <script type="module" src="app.js?v=__WMTVER__"></script>

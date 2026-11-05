@@ -1,0 +1,117 @@
+{
+  "format": "wmt.entity-graph/1",
+  "entities": [
+    {
+      "id": "person:alice",
+      "schema": "contact/1",
+      "attributes": {
+        "label": "Alice \u00b7 CRM",
+        "email": "alice@example.org",
+        "embedding": {
+          "space": {
+            "model": "demo-embedding",
+            "revision": "1",
+            "preprocessing": "demo-vectors-v1",
+            "normalization": "l2",
+            "dimensions": 3
+          },
+          "values": [
+            1,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "person:alias",
+      "schema": "contact-semantic/1",
+      "attributes": {
+        "label": "Alice \u00b7 research graph",
+        "email": "alias@example.org",
+        "embedding": {
+          "space": {
+            "model": "demo-embedding",
+            "revision": "1",
+            "preprocessing": "demo-vectors-v1",
+            "normalization": "l2",
+            "dimensions": 3
+          },
+          "values": [
+            0.9396926207859084,
+            0.3420201433256687,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "person:neighbor",
+      "schema": "contact/1",
+      "attributes": {
+        "label": "Nearby profile",
+        "email": "neighbor@example.org",
+        "embedding": {
+          "space": {
+            "model": "demo-embedding",
+            "revision": "1",
+            "preprocessing": "demo-vectors-v1",
+            "normalization": "l2",
+            "dimensions": 3
+          },
+          "values": [
+            0.766044443118978,
+            0.6427876096865394,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "person:other-space",
+      "schema": "contact/1",
+      "attributes": {
+        "label": "Profile \u00b7 another model revision",
+        "email": "alias@example.org",
+        "embedding": {
+          "space": {
+            "model": "demo-embedding",
+            "revision": "2",
+            "preprocessing": "demo-vectors-v1",
+            "normalization": "l2",
+            "dimensions": 3
+          },
+          "values": [
+            0.9396926207859084,
+            0.3420201433256687,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "org:lab",
+      "schema": "organization/1",
+      "attributes": {
+        "label": "Trajectory Lab"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "subject": "person:alice",
+      "predicate": "worksAt",
+      "object": "org:lab"
+    },
+    {
+      "subject": "person:alias",
+      "predicate": "worksAt",
+      "object": "org:lab"
+    },
+    {
+      "subject": "person:neighbor",
+      "predicate": "worksAt",
+      "object": "org:lab"
+    }
+  ]
+}

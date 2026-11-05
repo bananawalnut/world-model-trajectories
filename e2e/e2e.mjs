@@ -54,16 +54,17 @@ const colored = await page.$$eval('#claims .claim', (els) =>
 if (colored < 4) fail('claims not dialectically coloured, got ' + colored);
 console.log('· inconsistent: SVG + positions + disagreements + optimal repair + coloured claims');
 
-// 3. argumentation-framework view (Increment B): attack graph + acceptance
+// 3. Collective conflicts and acceptance across maximal coherent positions.
 {
   const svgs = (await page.$$('#field svg')).length;
-  if (svgs < 2) fail('expected conflict SVG + attack-graph SVG, got ' + svgs);
+  if (svgs < 2) fail('expected conflict views, got ' + svgs);
+  if (await page.$('svg[aria-label="attack graph"]')) fail('pair co-membership must not be rendered as binary attacks');
   const f = await page.$eval('#field', (e) => e.textContent);
-  if (!/Argumentation/.test(f)) fail('no argumentation section');
+  if (!/Collective conflicts/.test(f)) fail('no collective-conflict section');
   if (!/skeptical/.test(f) || !/contested/.test(f) || !/defeated/.test(f)) fail('no acceptance summary');
-  if (!/Dung/.test(f)) fail('argumentation honesty note missing');
+  if (!/Pair co-membership is not a binary attack/.test(f)) fail('collective-conflict semantics note missing');
 }
-console.log('· argumentation: attack graph + skeptical/contested/defeated + honest Dung note');
+console.log('· collective conflicts: whole groups + skeptical/contested/defeated; no false binary attacks');
 
 // 3b. defeasible reading (Increment E): the penguin is a default with a
 //     more-specific exception, NOT a contradiction. One click reframes it.
@@ -135,7 +136,7 @@ console.log('· auto-formalize: present; key-less path honest and offline');
 //    non-toy KB with three overlapping conflicts + several positions.
 await page.click('#scenario');
 await page.waitForFunction(() => /inconsistent/i.test(document.querySelector('#status')?.textContent || ''), null, { timeout: 90000 }).catch(() => fail('worked KB did not reach inconsistent'));
-await page.waitForFunction(() => /Argumentation/.test(document.querySelector('#field')?.textContent || ''), null, { timeout: 90000 }).catch(() => fail('worked KB lattice did not render'));
+await page.waitForFunction(() => /Collective conflicts/.test(document.querySelector('#field')?.textContent || ''), null, { timeout: 90000 }).catch(() => fail('worked KB lattice did not render'));
 {
   const claimN = await page.$$eval('#claims .claim', (e) => e.length);
   if (claimN !== 9) fail('worked KB should reset to its 9 claims, got ' + claimN);
@@ -144,9 +145,9 @@ await page.waitForFunction(() => /Argumentation/.test(document.querySelector('#f
   if (conflicts < 3) fail('worked KB must show ≥3 irreducible disagreements, got ' + conflicts);
   const positions = (f.match(/Position [A-Z]/g) || []).length;
   if (positions < 3) fail('worked KB must show ≥3 coherent positions, got ' + positions);
-  if (!/skeptical/.test(f)) fail('worked KB argumentation summary missing');
+  if (!/skeptical/.test(f)) fail('worked KB coherent-position acceptance summary missing');
 }
-console.log('· worked KB: reset + 9 claims + ≥3 conflicts + ≥3 positions + argumentation');
+console.log('· worked KB: reset + 9 claims + ≥3 conflicts + ≥3 positions + coherent-position acceptance');
 
 if (errs.length) fail('console/page errors:\n' + errs.join('\n'));
 console.log('PASS — full real-browser stack verified (wasm core + Z3-wasm + DOM + lattice + seam)');

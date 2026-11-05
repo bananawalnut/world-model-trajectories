@@ -149,53 +149,18 @@ function svgField(activeIds, muses) {
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="conflict structure">${hulls}${nodes}${legend}</svg>`;
 }
 
-// Increment B — the Dung argumentation reading, drawn as an attack graph.
-// Nodes = active claims; an undirected edge = the two co-occur in an
-// irreducible disagreement (so a node's neighbours are exactly what it
-// must out-argue). Colour = acceptance: skeptical (in every coherent
-// position), contested (some), defeated (none). This is a *picture of
-// lattice data already computed and tested*, not a second solve.
-function svgAttackGraph(active, af) {
-  const n = active.length;
-  if (!n) return '';
-  const cls = (id) =>
-    af.skeptical.includes(id) ? 'necessary'
-      : af.defeated.includes(id) ? 'defeated'
-      : af.credulous.includes(id) ? 'contested' : 'coherent';
-  const fill = { necessary: '#5b8a5a', contested: '#d99a3f', defeated: '#b9534a', coherent: '#2a3a55' };
-  const W = 640, H = Math.max(240, 80 + n * 22), cx = W / 2, cy = H / 2, R = Math.min(cy - 36, 150);
-  const pt = (i) => {
-    const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
-    return [cx + R * Math.cos(a), cy + R * Math.sin(a)];
-  };
-  let edges = '';
-  (af.attacks || []).forEach(([a, b]) => {
-    const i = active.indexOf(a), j = active.indexOf(b);
-    if (i < 0 || j < 0) return;
-    const [x1, y1] = pt(i), [x2, y2] = pt(j);
-    edges += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#b9534a" stroke-width="1.4" stroke-opacity=".55"/>`;
-  });
-  let nodes = '';
-  active.forEach((id, i) => {
-    const [x, y] = pt(i), c = fill[cls(id)];
-    nodes += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${c}" stroke="#241f19" stroke-width="1.2"/>` +
-      `<text x="${(x + (x < cx ? -11 : 11)).toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="12" font-family="'JetBrains Mono',monospace" fill="#241f19" text-anchor="${x < cx ? 'end' : 'start'}">${esc(short(id))}</text>`;
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="attack graph">${edges}${nodes}</svg>`;
-}
-
-function afBlock(af) {
+function afBlock(af,groups) {
   const row = (label, ids, klass, note) =>
     `<div class="acc ${klass}"><b>${label}</b> <span class="muted small">${note}</span><div>` +
     (ids.length ? ids.map((x) => `<code class="tok">${esc(short(x))}</code>`).join(' · ') : '—') +
     `</div></div>`;
-  return `<div class="fieldlabel">Argumentation · acceptance under the disagreement</div>` +
-    svgAttackGraph(LAST.active, af) +
+  return `<div class="fieldlabel">Collective conflicts · acceptance across coherent positions</div>` +
+    svgField(LAST.active, groups) +
     `<div class="accept">` +
-    row('skeptical', af.skeptical, 'necessary', 'in every coherent position — cannot be rationally given up') +
+    row('skeptical', af.skeptical, 'necessary', 'in every maximal coherent position') +
     row('contested', af.credulous.filter((x) => !af.skeptical.includes(x)), 'contested', 'defensible, but some position rejects it') +
     row('defeated', af.defeated, 'defeated', 'no coherent position keeps it') +
-    `</div><p class="small muted">Dung AF with attack = co-membership in an irreducible disagreement. Under exactly that relation a set is conflict-free iff consistent, so the preferred/stable extensions <em>are</em> the coherent positions above — this is their faithful reading, not a separate claim.</p>`;
+    `</div><p class="small muted">Each shaded group is a whole minimal conflict. Removing any member makes that group consistent. Pair co-membership is not a binary attack: P, Q, and ¬(P ∧ Q) conflict together while all pairs are consistent. Acceptance counts come from the maximal coherent positions, not binary Dung extensions.</p>`;
 }
 
 // Increment C — the forkable trajectory tree. A branch is a snapshot of
@@ -495,7 +460,7 @@ async function doRefresh() {
   }
 
   const af = lat.af || { attacks: [], skeptical: [], credulous: [], defeated: [] };
-  if (!lat.capped) html += afBlock(af);
+  if (!lat.capped) html += afBlock(af,lat.mus);
   const contested = af.credulous.filter((x) => !af.skeptical.includes(x));
   LAST.summary = {
     status: 'inconsistent',
