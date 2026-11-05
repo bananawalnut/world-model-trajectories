@@ -31,7 +31,10 @@ assignments to a model.
 
 ## Reusable paper review checkpoint
 
-The experimental paper SDK is now `0.1.0-experimental.5`. Open
+See [CHECKPOINT.md](CHECKPOINT.md) for the implemented scope, unfinished work,
+verification results and fork/upstream workflow for this experimental branch.
+
+The experimental paper SDK is now `0.1.0-experimental.6`. Open
 [`site/definitions.html`](site/definitions.html) for a public, generated-PDF
 example of one definition binding, source uses, retained ambiguous candidates,
 editable typed IR, explicit formalization review and checked bucket admission.
@@ -43,6 +46,13 @@ Private paper sources, assessments and fixtures are not included. Public tests
 generate their own synthetic PDF and require no private files. The existing
 Rust/Wasm core, executable-kernel artifacts and Z3 assets remain unchanged.
 See [CHECKPOINT.md](CHECKPOINT.md) for scope, compatibility and verification.
+
+The paper workbench now connects user-written kernels to that review flow.
+In [`site/papers.html`](site/papers.html#paper-kernel-panel), load the synthetic
+kernel paper, confirm the formula, run/edit OCaml, review the produced observation
+and replay it before a checked bucket append. Score, embedding and pinned
+veri7vn quantity examples execute locally. The [SDK kernel guide](site/sdk/README.md#paper-kernels)
+documents the public executor API, exact bindings, sidecars and proof boundary.
 
 ## Guided PDF-to-buckets walkthrough
 

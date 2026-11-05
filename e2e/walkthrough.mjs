@@ -14,6 +14,9 @@ async function screenshot(name){if(artifacts){await mkdir(artifacts,{recursive:t
 async function download(id){const [d]=await Promise.all([page.waitForEvent('download'),page.click('#'+id)]);return {path:await d.path(),value:JSON.parse(await readFile(await d.path(),'utf8'))};}
 try {
   await page.goto(base+'walkthrough.html');await page.waitForFunction(()=>document.querySelector('#walk-ready')?.classList.contains('rdy'),null,{timeout:90000});await idle();
+  // A ResizeObserver can schedule another PDF paint after the ready badge.
+  // Wait for the actual highlight rather than racing that asynchronous paint.
+  await page.waitForSelector('#pdf-highlights .pdf-highlight');
   assert.equal(await page.locator('#pdf-page-label').textContent(),'Page 1 / 2');assert(await page.locator('#pdf-highlights .pdf-highlight').count()>0);
   assert(await page.locator('[data-step="4"]').isDisabled());
   await page.click('[data-source="T1"]');await page.waitForFunction(()=>document.querySelector('#pdf-page-label').textContent==='Page 2 / 2');

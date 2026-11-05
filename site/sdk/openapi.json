@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "WMT paper sidecar SDK",
-    "version": "0.1.0-experimental.1",
-    "description": "Experimental loopback API. In-memory, self-attributed actors, no publication or external code execution. Authentication and signed Gate 0 release are host responsibilities."
+    "version": "0.1.0-experimental.6",
+    "description": "Experimental loopback API. In-memory, self-attributed actors, no publication or automatic submitted-code execution. Host-installed verifiers may replay explicitly requested kernel artifacts. Authentication, executor isolation and signed Gate 0 release are host responsibilities."
   },
   "servers": [
     {

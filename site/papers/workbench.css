@@ -23,7 +23,7 @@
 .source-claim code { overflow-wrap:anywhere; }
 .source-claim .locator { font-family:var(--mono); font-size:.7rem; color:var(--bark); }
 .source-claim .unsupported { color:#85552c; }
-.bucket-snapshot { border-left:3px solid var(--moss); padding:.5rem 1rem; margin:1rem 0; }
+.bucket-snapshot { border-left:3px solid var(--moss); padding:.5rem 1rem; margin:1rem 0; overflow-wrap:anywhere; }
 .bucket-snapshot code { font-size:.72rem; overflow-wrap:anywhere; }
 .bucket-snapshot ul { margin:.5rem 0 .5rem 1.5rem; }
 .position-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:1rem; margin:1rem 0; }
@@ -113,3 +113,10 @@
   .position-matrix td:first-of-type,.position-matrix thead th:nth-child(2) { display:none; }
   .mobile-acceptance { display:block; font-size:.65rem; margin:.4rem .2rem 0; }
 }
+
+#paper-kernel-panel { scroll-margin-top: 6rem; }
+#paper-kernels, .paper-workbench .source-claim, .paper-workbench .evidence-card { overflow-wrap: anywhere; }
+#paper-kernels .review-line { flex-direction: row; align-items: flex-start; }
+#paper-kernels [data-kernel-math] { position: relative; max-width: 100%; overflow-x: auto; }
+#paper-kernels .math-fragment { position: relative; }
+#paper-kernels pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 32rem; overflow: auto; }

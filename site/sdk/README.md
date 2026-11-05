@@ -2,7 +2,7 @@
 
 The public synthetic example groups symbols, definitions and uses, then connects an explicitly reviewed draft to a checked bucket.
 
-`@wmt/paper-sdk@0.1.0-experimental.5` is a runnable SDK and loopback HTTP API for
+`@wmt/paper-sdk@0.1.0-experimental.6` is a runnable SDK and loopback HTTP API for
 paper submissions, versioned personal/RFC buckets, and computational evidence.
 The browser consumer is [`../papers.html`](../papers.html). The existing claim,
 entity-equality and veri7vn mass workbenches remain available.
@@ -251,6 +251,138 @@ host must install a matching verifier to re-execute it; importing JSON does
 not inherit the veri7vn theorem or make an old computation freshly checked.
 Namespace reusable ground symbols/claim IDs explicitly when composing multiple
 observations; conflicting revisions are rejected rather than silently aliased.
+
+## Paper kernels
+
+Open `papers.html#paper-kernel-panel` and choose **Load synthetic kernel paper**
+for an extracted PDF with an explicitly authored numerical claim. Confirm its
+source/formula mapping, run your kernel, inspect the returned JSON, edit and
+review the formal observation, then choose **Rerun, check & add to active bucket**.
+The page includes a score comparison, an embedding comparison, and actual use
+of the pinned veri7vn quantity module. Kernel JSON can be imported without
+executing it. No paper source or attachment executes automatically.
+
+```mermaid
+flowchart LR
+  A[Reviewed paper formulas] --> B[Bind claims, code and explicit inputs]
+  B --> C[Installed executor runs kernel]
+  C --> D[Inspect JSON output]
+  D --> E[Author observation IR and review its source mapping]
+  E --> F[Replay exact computation and compare output/runtime revision]
+  F --> G[Check full bucket conjunction with Z3]
+  G --> H[SAT append or unchanged conflict/stopped bucket]
+```
+
+The supported SDK functions are exported from `@wmt/paper-sdk`. Browser OCaml
+execution is exported separately from `@wmt/paper-sdk/kernels/browser`:
+
+```js
+import {
+  createKernelRequest, runPaperKernel, kernelObservationIR,
+  prepareKernelObservation, reviewKernelObservation, submitKernelObservation
+} from '@wmt/paper-sdk';
+import {createBrowserOCamlExecutor} from '@wmt/paper-sdk/kernels/browser';
+
+// The host installs trusted runtime assets and their build receipt. The static
+// example serves the existing OCaml builds under /kernels/. The npm package
+// includes the SDK worker, but does not duplicate those large runtime builds.
+const executor = await createBrowserOCamlExecutor({
+  runtimeBaseURL: new URL('/kernels/', location.href),
+  buildReceipt: await fetch('/kernels/build-receipt.json').then(r => r.json())
+});
+const executors = new Map([[executor.id, executor]]);
+const kernel = {
+  format: 'wmt.kernel/1', id: 'my-score-check', revision: '1',
+  executorId: executor.id, language: 'ocaml', interface: 'wmt.json-kernel/1',
+  libraries: [],
+  source: `open Wmt_Paper_Kernel;;
+let run request =
+  let inputs = field "inputs" request in
+  Bool (number (field "measured" inputs) >= number (field "minimum" inputs));;`
+};
+const request = await createKernelRequest(paper, {
+  kernel, inputs: {measured: 100, minimum: 80}, claimIds: [reviewedClaimId]
+});
+const run = await runPaperKernel(paper, request, {executors, signal});
+if (run.result.status !== 'executed') throw new Error(run.result.reason);
+
+// This default primitive records only this computation. It does not identify
+// its result with a theorem's truth. The caller may author another strict IR,
+// but must inspect and review that explicit interpretation separately.
+const ir = await kernelObservationIR(request, run);
+const draft = await prepareKernelObservation(paper, request, run, {
+  ir, sourceClaimId: selectedClaimSourceId
+});
+// Call after the user has inspected the exact result, code and source mapping.
+const reviewed = await reviewKernelObservation(draft, {actorId});
+const result = await submitKernelObservation({
+  draft: reviewed, repository, bucketId: bucket.id,
+  expectedVersion: bucket.version, expectedDigest: bucket.digest,
+  actorId, idempotencyKey: crypto.randomUUID(), executors, signal
+});
+// result.submission carries the artifact and the fresh execution receipt.
+// Export it with result.receipt and result.bucket through exportSidecar().
+```
+
+The OCaml interface is `run : Wmt_Paper_Kernel.json -> Wmt_Paper_Kernel.json`.
+The request object has `inputs` and `claims` (only the selected reviewed claims,
+including their typed formulas). JSON constructors are `Null`, `Bool`, `Number`
+(an exact JSON numeral string), `String`, `Array`, and `Object`. Helpers `field`,
+`number`, `text`, `array`, and `boolean` unpack values. `number` uses OCaml float
+arithmetic; it is not an exact-real solver. Use Zarith rationals or the pinned
+quantity module for exact arithmetic. Output must be one bounded JSON value.
+Libraries are installed explicitly by the host, with source SHA-256 hashes,
+and selected by ID in `kernel.libraries`; paper code cannot select a library URL.
+Install `veri7vn.quantity` with the generated `quantity.ml` and
+`buildReceipt.generatedSourceSha256` to use the existing reference module.
+
+`createBrowserOCamlExecutor` supports `runtime: 'wasm'` (default, Wasm-GC) or
+`'js'` using the same source. It checks the selected runtime files against the
+host's build receipt and includes runtime, worker-adapter and library hashes in
+its revision. Every run uses a fresh worker that is terminated on completion,
+failure or cancellation. These are the same trusted-code compiler builds used
+by the original labs. A worker is not a hostile-code security sandbox.
+
+Other hosts, including Node applications, can install a
+`Map<executorId, {id, revision, execute(request, {signal, wallTimeMs})}>`.
+This is an explicit host callback, not automatic execution of uploaded JavaScript
+or shell commands. The host must provide isolation and honor cancellation;
+a synchronous callback that blocks the host cannot be preempted by a timer.
+The SDK does not ship a native Node OCaml compiler. Requests default to 20 seconds
+and allow 1–60000 ms, a 150 KB request, 100 KB source, 40 KB observation IR,
+30 JSON nesting levels and 30000 JSON nodes, within the existing strict-IR limits.
+
+Requests bind the paper/source/proposal/reviewed-IR digests, selected claims,
+exact kernel source/revision/libraries and explicit inputs. This does not infer
+that manually entered inputs were faithfully derived from the paper. The user
+reviews that interpretation. Observations are new assumptions with an explicit
+source mapping; their source text should identify them as computed observations.
+The derived submission contains only the previously reviewed claims plus these
+new observations. Other paper candidates remain outside it. Existing proofs
+remain in the original base snapshot; their bindings are not silently retargeted.
+
+Admission re-executes the original request, compares its entire output and
+executor revision with the reviewed run, and only then calls the repository's
+versioned full-conjunction check. Changed output/code/inputs, missing executors,
+compile errors, timeouts, cancellation or stale review cannot append through
+this workflow. SAT can append; UNSAT keeps the bucket unchanged. Retrying an
+identical idempotency key still replays the computation without double-appending.
+The low-level `submitToBucket`/`repository.submit` APIs remain strict-IR
+consistency APIs; applications should use `submitKernelObservation` for this
+execution-and-review guarantee.
+
+Execution evidence uses the existing computational-artifact envelope with kind
+`wmt.kernel-execution/1`. `checked` for this kind means the exact computation
+was reproduced; it does **not** certify the authored IR mapping, prove the
+program correct, inherit a veri7vn theorem, or establish the target's truth.
+`createKernelVerifier({executors})` registers this replay checker through the
+existing `verifiers` map. A loopback sidecar host can install it under
+`KERNEL_PROOF_KIND` and use the existing proof attachment/check routes; this
+release adds JS SDK authoring functions, not new HTTP kernel-authoring routes.
+No checker installed means `not_checked`. Sidecar/workspace imports preserve
+source artifacts but clear live review/check status; a saved receipt alone never
+authorizes a fresh kernel admission. Existing submission, proof and bucket
+formats remain readable. This is an additive experimental SDK release.
 
 ## Computational proof sidecars
 

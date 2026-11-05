@@ -38,7 +38,7 @@ export function createSidecarServer({client=createNodeClient(),repository=new Bu
       if(request.headers.origin)requireThat(request.headers.origin===`http://${request.headers.host}`,'Cross-origin mutation is unavailable.','owner_mismatch');
       const url=new URL(request.url,'http://'+request.headers.host),segments=url.pathname.split('/').filter(Boolean).map(decodeURIComponent),method=request.method;
       if(method==='GET' && url.pathname==='/v1/capabilities')return json(response,200,{
-        format:'wmt.sidecar-capabilities/1',sdk:'0.1.0-experimental.5',releaseStatus:'experimental_unsigned',
+        format:'wmt.sidecar-capabilities/1',sdk:'0.1.0-experimental.6',releaseStatus:'experimental_unsigned',
         extraction:claimExtractor?.id??'PDF.js text layer; candidate_partial; OCR adapter not installed',formalizers:['wmt.controlled-fol/1',...formalizers.keys()],
         reasoningPolicies:['wmt.strict-specificity-greedy/1','wmt.named-normal-extensions/1'],proofCheckers:['smt-entailment','smt-explanation-witness',...verifiers.keys()],bucketScopes:['personal','rfc'],persistence:'memory_only',publication:'unavailable',
         runtime:JSON.parse(await readFile(new URL('./runtime/manifest.json',import.meta.url),'utf8'))});

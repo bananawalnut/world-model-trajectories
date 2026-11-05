@@ -101,3 +101,9 @@ jobs:
           BASE: http://localhost:8799/
           PW_CHANNEL: chromium
         run: node definitions.mjs
+      - name: Execute user paper kernels, review observations and admit checked buckets
+        working-directory: e2e
+        env:
+          BASE: http://localhost:8799/
+          PW_CHANNEL: chromium
+        run: node paper-kernels.mjs

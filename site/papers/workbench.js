@@ -1,11 +1,14 @@
 import {mountReasoningPanel} from './reasoning-panel.mjs';
+import {mountPaperKernels,paperKernelVerifiers} from './kernel-panel.mjs';
+import {createKernelExampleSubmission} from './kernel-example.mjs';
+const kernelState={};
 const reasoningState={};
 import {selectProofSpans,PROOF_CANDIDATE_POLICY,buildCandidateReview,effectiveCandidateRole} from '../sdk/proof-candidates.mjs';
 import {mountCandidateReview,restoreCandidateFeedback} from './candidate-review.mjs';
 import {renderMathText} from './math-text.mjs';
 import {createWorkerClient,BucketRepository,createSubmission,formalizeSubmission,reviewSubmission,restoreSubmission,
   controlledParser,DEMO_VOCABULARY,EMPTY_IR,mergeIR,formalizerPrompt,makeEntailmentProof,validateProof,verifySubmissionProofs,
-  compareBuckets,exportSidecar,requireThat,clone} from '../sdk/index.mjs';
+  compareBuckets,exportSidecar,requireThat,clone,KERNEL_PROOF_KIND} from '../sdk/index.mjs';
 import {mountCoherenceView,mountTrajectoryView} from './coherence-view.mjs';
 
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,6 +16,9 @@ const client=createWorkerClient(()=>new Worker(new URL('./worker.js',import.meta
 let candidateReview=null,candidateNotice='',candidateView={order:'review',filter:'all',search:'',page:0};
 let repository=new BucketRepository(client),paper=null,rendered=[],receipt=null,busy=false,controller;
 function activeBucket(){return $('bucket-select').value?repository.get($('bucket-select').value):null;}
+function renderKernels(){mountPaperKernels($('paper-kernels'),{getSubmission:()=>paper,getBucket:activeBucket,getActorId:()=>$('actor-id').value,repository,task,state:kernelState,onResult:async(result,signal)=>{
+ paper=result.submission;const meta=await client.request('render',{ir:paper.proposal.ir},{signal});requireThat(Array.isArray(meta.claims),'Could not render the kernel observation.');rendered=meta.claims;renderPaper();receipt=result.receipt;renderBuckets(result.bucket.id);renderReceipt();
+}});}
 function updateControls() {
   $('formalize-paper').disabled=busy||!paper;$('extract-structured').disabled=busy||!paper;
   $('apply-authored-proposal').disabled=busy||!paper;
@@ -44,7 +50,7 @@ function renderBuckets(preferred=$('bucket-select').value) {
   $('bucket-select').value=buckets.some(b=>b.id===preferred)?preferred:buckets[0]?.id??'';
   const compare=$('bucket-compare').value;
   $('bucket-compare').innerHTML='<option value="">Choose a version to compare</option>'+repository.export().versions.map(b=>`<option value="${escape(JSON.stringify({id:b.id,version:b.version}))}">${escape(b.name)} · v${b.version}</option>`).join('');
-  $('bucket-compare').value=compare;renderBucketSummary();updateControls();
+  $('bucket-compare').value=compare;renderBucketSummary();updateControls();renderKernels();
 }
 function renderBucketSummary() {
   mountTrajectoryView($('bucket-trajectories'),{workspace:repository.export(),activeId:$('bucket-select').value,onSelect:version=>{
@@ -66,6 +72,7 @@ function renderComparison() {
   $('bucket-comparison').innerHTML=`<div class="bucket-snapshot"><b>${escape(b.name)} v${b.version} ↔ ${escape(other.name)} v${other.version}</b><p class="small">Only in the active bucket: ${d.onlyLeft.map(id=>escape(sources.get(id))).join(' · ')||'none'}</p><p class="small">Only in the comparison: ${d.onlyRight.map(id=>escape(sources.get(id))).join(' · ')||'none'}</p><p class="small">Changed claim IDs: ${d.changed.map(escape).join(', ')||'none'}</p></div>`;
 }
 function renderPaper() {
+  renderKernels();
   if(!paper){candidateReview=null;$('structured-review').replaceChildren();$('paper-source-summary').replaceChildren();$('paper-claims').innerHTML='<p class="muted">Load a PDF to extract candidate claims.</p>';$('paper-review-status').textContent='';updateControls();return;}
   const doc=paper.document,reviewed=new Set(paper.review?.sourceClaimIds??[]),mappings=new Map(paper.proposal?.mappings.map(m=>[m.sourceClaimId,m.formalClaimIds])??[]);
   const renders=new Map(rendered.map(c=>[c.id,c.render])),reasons=new Map(paper.proposal?.unsupported.map(u=>[u.sourceClaimId,u.reason])??[]);
@@ -88,6 +95,7 @@ function renderProofControls() {
   $('proof-premises').innerHTML=claims.map((c,i)=>`<option value="${c.id}" ${i<claims.length-1?'selected':''}>${escape(c.source)}</option>`).join('');
 }
 function renderProofs() {
+  renderKernels();
   mountReasoningPanel($('paper-reasoning'),{client,submission:paper,state:reasoningState,repository,onWorkspace:(workspace,id)=>{renderBuckets(id);},onAttach:(artifact,receipt)=>{if(!paper.proofs.some(p=>p.id===artifact.id)){paper.proofs.push(artifact);paper.proofReceipts.push(receipt);renderProofs();updateControls();}}});
   const proofs=paper?.proofs??[],results=new Map(paper?.proofReceipts.map(r=>[r.proofId,r])??[]);
   $('paper-proofs').innerHTML=proofs.map(p=>{const r=results.get(p.id);return `<div class="evidence-card ${r?.result.status==='checked'?'checked':''}" data-proof-id="${escape(p.id)}"><b>${escape(p.id)}</b> · ${escape(p.kind)}<p class="small"><b>${escape(r?.result.status??'attached, not checked')}</b> · ${escape(r?.result.reason??'No checker has run for this artifact.')}</p>${r?.checker?`<code>${escape(r.checker.id)} · ${escape(r.checker.revision??'no completed revision')}</code>`:''}</div>`;}).join('')||'<p class="muted">No computational evidence attached.</p>';
@@ -139,7 +147,8 @@ $('create-bucket').onclick=()=>task('Creating and checking this named bucket…'
     owner:$('actor-id').value,rfcRef:$('new-bucket-scope').value==='rfc'?$('new-bucket-rfc').value:null,ir:await parseInitial($('initial-bucket-claims').value),signal});
   renderBuckets(bucket.id);clearResult();
 });
-$('bucket-select').onchange=()=>{renderBucketSummary();clearResult();updateControls();};$('bucket-compare').onchange=renderComparison;
+$('bucket-select').onchange=()=>{renderBucketSummary();clearResult();updateControls();renderKernels();};$('bucket-compare').onchange=renderComparison;
+$('load-kernel-paper').onclick=()=>task('Extracting the synthetic computation PDF…',async signal=>{const example=await createKernelExampleSubmission(client,{signal});$('paper-title').value=example.title;$('paper-authors').value=example.authors.join(', ');await setPaper(example,signal);$('paper-kernel-panel').scrollIntoView({block:'start'});});
 $('load-paper-demo').onclick=()=>task('Extracting candidates from the real demo PDF…',async signal=>{
   const response=await fetch('./papers/demo.pdf',{credentials:'omit'});requireThat(response.ok,'Demo PDF unavailable.');
   $('paper-title').value='A small paper with a disputed flight model';$('paper-authors').value='WMT SDK demonstration';
@@ -174,9 +183,13 @@ $('proof-file').onchange=()=>task('Attaching proof artifacts without running sub
   requireThat(proofs.length<=16,'Limit proof artifacts to 16.');for(const p of proofs)await validateProof(p);
   requireThat(new Set(proofs.map(p=>p.id)).size===proofs.length,'Duplicate proof IDs.');paper.proofs=proofs;paper.proofReceipts=[];renderProofs();
 });
-$('check-paper-proofs').onclick=()=>task('Running installed checkers on the exact bound inputs…',async signal=>{paper=await verifySubmissionProofs(paper,client,{signal});renderProofs();});
+$('check-paper-proofs').onclick=()=>task('Running installed checkers on the exact bound inputs…',async signal=>{paper=await verifySubmissionProofs(paper,client,{signal,...(paper.proofs.some(p=>p.kind===KERNEL_PROOF_KIND)?{verifiers:await paperKernelVerifiers()}:{})});renderProofs();});
 $('submit-to-bucket').onclick=()=>task('Checking the full combined claim set and enumerating coherent positions…',async signal=>{
   const bucket=activeBucket();requireThat(bucket && paper?.review,'Choose a bucket and confirm the paper mappings first.');clearResult();
+  if(paper.proofs.some(p=>p.kind===KERNEL_PROOF_KIND)){
+    paper=await verifySubmissionProofs(paper,client,{signal,verifiers:await paperKernelVerifiers()});
+    requireThat(!signal.aborted&&paper.proofs.filter(p=>p.kind===KERNEL_PROOF_KIND).every(p=>paper.proofReceipts.some(r=>r.proofId===p.id&&r.result.status==='checked')),'Kernel results did not reproduce; run and review them again.');renderProofs();
+  }
   const result=await repository.submit(bucket.id,{expectedVersion:bucket.version,expectedDigest:bucket.digest,actorId:$('actor-id').value,
     submission:paper,idempotencyKey:crypto.randomUUID(),signal});receipt=result.receipt;renderBuckets(bucket.id);renderReceipt();
 });

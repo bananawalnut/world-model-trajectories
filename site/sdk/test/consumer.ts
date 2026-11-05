@@ -54,3 +54,18 @@ void extensionsConsumer;
 import {buildDefinitionReview,definitionConcepts,mergeDefinitionConcepts,moveDefinitionOccurrence,type DefinitionReview} from '@wmt/paper-sdk';
 async function definitionConsumer(bytes:Uint8Array){const p=await createSubmission({bytes,title:'Definitions',authors:['Author']},createNodeClient());let review:DefinitionReview=await buildDefinitionReview(p.document,p.extraction);const concepts=definitionConcepts(review);if(concepts.length>1)review=await mergeDefinitionConcepts(review,{conceptIds:concepts.slice(0,2).map(c=>c.id),label:'One shared concept'});const first=review.occurrences[0];if(first)review=await moveDefinitionOccurrence(review,{occurrenceId:first.id,conceptId:review.concepts[0].id,kind:'reference'});return review;}
 void definitionConsumer;
+
+import {createKernelRequest,runPaperKernel,kernelObservationIR,prepareKernelObservation,reviewKernelObservation,submitKernelObservation,createKernelVerifier,KERNEL_PROOF_KIND,type Kernel,type KernelExecutor} from '@wmt/paper-sdk';
+import {createBrowserOCamlExecutor} from '@wmt/paper-sdk/kernels/browser';
+async function kernelConsumer(paper:Submission,executor:KernelExecutor,kernel:Kernel){
+ const executors=new Map([[executor.id,executor]]),client=createNodeClient(),repo=new BucketRepository(client);
+ const request=await createKernelRequest(paper,{kernel,inputs:{measured:100,minimum:80},claimIds:[paper.review!.ir.claims[0].id]});
+ const run=await runPaperKernel(paper,request,{executors});if(run.result.status!=='executed')return run.result.reason;
+ const ir=await kernelObservationIR(request,run),sourceClaimId=paper.proposal!.mappings[0].sourceClaimId;
+ const draft=await reviewKernelObservation(await prepareKernelObservation(paper,request,run,{ir,sourceClaimId}),{actorId:'me'});
+ const b=await repo.create({id:'kernel',name:'Kernel',owner:'me'});
+ const result=await submitKernelObservation({draft,repository:repo,bucketId:b.id,expectedVersion:1,expectedDigest:b.digest,actorId:'me',idempotencyKey:'kernel-example',executors});
+ const verifiers=new Map([[KERNEL_PROOF_KIND,createKernelVerifier({executors})]]);
+ createSidecarServer({client,verifiers});return result;
+}
+void kernelConsumer;void createBrowserOCamlExecutor;

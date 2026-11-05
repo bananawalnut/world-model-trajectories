@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createSidecarServer} from '../server.mjs';
 import {encodeBase64,controlledParser,makeEntailmentProof} from '../index.mjs';
 import {demoBytes,demoPaper} from './helpers.mjs';
+import {createKernelRequest,runPaperKernel,kernelObservationIR,prepareKernelObservation,reviewKernelObservation,createKernelVerifier,KERNEL_PROOF_KIND} from '../index.mjs';
 async function serve(t,options={}) {
   const sidecar=createSidecarServer(options);await new Promise(resolve=>sidecar.server.listen(0,'127.0.0.1',resolve));
   const base='http://127.0.0.1:'+sidecar.server.address().port;t.after(()=>sidecar.close());
@@ -57,6 +58,20 @@ test('API keeps review and revision gates, refuses claimed checker success, unkn
 });
 test('API enforces its streaming body budget',async t=>{
   const call=await serve(t,{maxBodyBytes:128});const result=await call('/v1/submissions',{title:'x'.repeat(500)});assert.equal(result.status,413);assert.equal(result.body.code,'resource_limit');
+});
+test('an installed kernel replay checker uses existing HTTP artifact/check routes and preserves its exact sidecar',async t=>{
+ let runs=0;const executor={id:'host:kernel',revision:'1',async execute(){runs++;return true;}},executors=new Map([[executor.id,executor]]);
+ const call=await serve(t,{verifiers:new Map([[KERNEL_PROOF_KIND,createKernelVerifier({executors})]])}),p=await reviewed(call);
+ const request=await createKernelRequest(p.submission,{kernel:{format:'wmt.kernel/1',id:'api:kernel',revision:'1',executorId:executor.id,language:'host-installed',interface:'test/1',source:'installed host test',libraries:[]},inputs:{sample:1},claimIds:[p.submission.review.ir.claims[0].id]});
+ const run=await runPaperKernel(p.submission,request,{executors}),ir=await kernelObservationIR(request,run),sourceClaimId=p.submission.proposal.mappings[0].sourceClaimId;
+ const draft=await reviewKernelObservation(await prepareKernelObservation(p.submission,request,run,{ir,sourceClaimId}),{actorId:'person:test'});
+ const proposal=draft.submission.proposal;
+ let current=(await call(`/v1/submissions/${p.submission.id}/formalizations`,{expectedRevision:p.revision,ir:proposal.ir,mappings:proposal.mappings,unsupported:proposal.unsupported,parserId:proposal.parserId})).body;
+ current=(await call(`/v1/submissions/${p.submission.id}/review`,{expectedRevision:current.revision,actorId:'person:test',sourceClaimIds:draft.submission.review.sourceClaimIds})).body;
+ current=(await call(`/v1/submissions/${p.submission.id}/proofs`,{expectedRevision:current.revision,proofs:draft.submission.proofs})).body;
+ assert.equal(runs,1,'Attaching code did not execute it');
+ const checked=await call(`/v1/submissions/${p.submission.id}/proofs/check`,{expectedRevision:current.revision});assert.equal(checked.status,200);assert.equal(checked.body.submission.proofReceipts[0].result.status,'checked');assert.equal(runs,2);
+ const sidecar=await call(`/v1/submissions/${p.submission.id}/sidecar`);assert.equal(sidecar.body.submission.proofs[0].evidence.request.digest,request.digest);
 });
 test('API checks automatic witnesses and returns revision-bound defaults receipts without mutating the paper',async t=>{
   const {makeWitnessProof}=await import('../index.mjs');

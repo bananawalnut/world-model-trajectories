@@ -24,7 +24,7 @@ export interface ProposalInput {ir:WmtIR;mappings:Mapping[];unsupported?:{source
 export interface Proposal {format:'wmt.formalization/1';documentHash:string;ir:WmtIR;mappings:Mapping[];unsupported:{sourceClaimId:string;reason:string}[];parserId:string;digest:string}
 export interface Review {format:'wmt.formalization-review/1';actorId:string;proposalDigest:string;sourceClaimIds:string[];ir:WmtIR;irDigest:string;reviewedAt:string;boundary:string}
 export interface Proof {format:'wmt.computational-proof/1';id:string;kind:string;binding:{documentHash:string;proposalDigest:string;irDigest:string;claimIds:string[]}|null;evidence:Record<string,Json>;assets:{fileName:string;mediaType:string;base64:string;sha256:string}[]}
-export interface ProofResult {status:'not_checked'|'checked'|'failed'|'unsupported';reason:string;stopReason?:string;inputDigest?:string;targetDigest?:string;targetClaimId?:string;premiseClaimIds?:string[];requestDigest?:string;complete?:boolean;candidatePremiseIds?:string[];minimality?:'inclusion';necessity?:{removedClaimId:string;without:'not_entailed'}[];runtime?:RuntimeManifest;profile?:string;limits?:Limits}
+export interface ProofResult {run?:import('./kernels.mjs').KernelRun;status:'not_checked'|'checked'|'failed'|'unsupported';reason:string;stopReason?:string;inputDigest?:string;targetDigest?:string;targetClaimId?:string;premiseClaimIds?:string[];requestDigest?:string;complete?:boolean;candidatePremiseIds?:string[];minimality?:'inclusion';necessity?:{removedClaimId:string;without:'not_entailed'}[];runtime?:RuntimeManifest;profile?:string;limits?:Limits}
 export interface ProofReceipt {format:'wmt.proof-receipt/1';id:string;proofId:string;proofDigest:string;binding:Proof['binding'];checker:{id:string;revision:string|null}|null;result:ProofResult;boundary:string;checkedAt:string|null}
 export interface Submission {format:'wmt.paper-submission/1';id:string;title:string;authors:string[];rfcRef:string|null;publicationRef:string|null;documentHash:string;document:PdfDocument;extraction:Extraction;source:{fileName:string;mediaType:'application/pdf';sha256:string;base64:string};proposal:Proposal|null;review:Review|null;proofs:Proof[];proofReceipts:ProofReceipt[];createdAt:string}
 export interface BucketRef {id:string;version:number;digest:string}
@@ -130,3 +130,4 @@ export function createModelClaimSelector(options:{completeJSON(input:{prompt:str
 
 export * from "./proof-candidates.mjs";
 export * from './definition-review.mjs';
+export * from './kernels.mjs';
